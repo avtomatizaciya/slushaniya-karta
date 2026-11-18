@@ -1,0 +1,18 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Слушания на карте</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>body{margin:0;font:14px system-ui,sans-serif}#m{height:100vh}#p{position:absolute;z-index:1000;top:10px;right:10px;background:#fffe;padding:8px 10px;border-radius:6px;max-width:260px;box-shadow:0 1px 4px #0004}
+#p b{display:block;margin-bottom:4px}.s{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}</style></head><body>
+<div id="m"></div><div id="p"><b>Слушания и обсуждения 2023-2026</b><div id="l"></div><small>Размер = число замечаний. Красная рамка: организатор рекомендовал отказ. Первый срез; зоны - ПЗЗ, не генплан.</small></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+const D=__DATA__;
+const C={'Планировка и межевание':'#2a7ab9','Межевание':'#5aa9e6','Условно разрешённый вид':'#e08a1e','Отклонение от параметров':'#8e5bb5','Дорога / линейный объект':'#555','Другое':'#999'};
+const m=L.map('m').setView([57.626,39.893],12);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
+const e=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+D.forEach(d=>{const bad=d.rec==='отказ';
+ L.circleMarker([d.lat,d.lon],{radius:7+Math.min(d.remarks,80)/4,color:bad?'#c00':'#fff',weight:bad?3:1,fillColor:C[d.kind],fillOpacity:.8}).addTo(m)
+ .bindPopup(`<b>${e(d.kind)}</b><br>${e(d.title)}<br>Район: ${e(d.district||'-')}; с ${e(d.date)}<br>Замечаний: ${d.remarks}; жители участвовали: ${d.residents?'да':'нет'}<br>Рекомендация: ${e(d.rec||'-')}<br>Зона ПЗЗ: ${e(d.zone||'-')}; использование: ${e(d.use||'-')}<br><small>Точка: ${e(d.how)}</small><br><a href="${e(d.url)}" target="_blank">Страница мэрии</a>`)});
+document.getElementById('l').innerHTML=Object.entries(C).map(([k,v])=>`<div><span class="s" style="background:${v}"></span>${k}</div>`).join('');
+</script></body></html>
