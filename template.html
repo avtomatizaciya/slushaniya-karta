@@ -46,7 +46,7 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
 .lbl{background:#fffd;border:0;box-shadow:none;font-size:11px;padding:0 3px;color:#222}#m:not(.z15) .lbl{display:none}
 .pop{max-width:290px}.pop h4{margin:0 0 3px;font-size:13px}.pop .lbl2{color:var(--mut)}.pop p{margin:4px 0}
 #now{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 12px;background:#eef9f3;border-bottom:1px solid #cdeedd;color:#0b4a32}#now.none{background:#f4f3ff;border-color:#dedbff;color:#2b2670}#now b{font-size:14px}#now .b{padding:3px 10px}
-.cb{display:flex;gap:4px;align-items:center}.cb small{color:var(--mut)}
+.cb{display:flex;gap:4px;align-items:center;min-height:24px}.cb input[type=checkbox]{width:24px;height:24px;margin:0}.lnk{min-height:24px}.cb small{color:var(--mut)}
 #mtabs{display:none}#ft{display:none}#more{display:contents}
 @media(max-width:940px){
  body{grid-template-rows:auto auto auto minmax(0,1fr) auto}
@@ -56,7 +56,7 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
  header small{display:none}.mkd small{display:none}header{flex-wrap:wrap;gap:4px 8px;padding:5px 8px}header h1{font-size:15px;flex:1 1 100%}.mkd,.bot{padding:4px 10px;font-size:12px}#ft{display:inline-block}#more{display:none;flex-wrap:wrap;gap:6px;width:100%}.bar.open #more{display:flex}.chips{width:100%}
  #leg{max-width:150px;bottom:6px}
  #now{padding:4px 8px;gap:6px}#now span{display:none}#now .b{min-height:36px}
- .mkd,.bot,.rst,#mtabs button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}.bar label{min-height:44px}.bar input[type=checkbox]{width:22px;height:22px}.bar input[type=range]{height:44px;width:96px!important}.bar select,.bar input[type=search]{min-height:44px}.lnk{min-height:44px}
+ .mkd,.bot,.rst,#mtabs button{min-height:44px;display:inline-flex;align-items:center;justify-content:center}.bar label{min-height:44px}.bar input[type=checkbox]{width:24px;height:24px}.bar input[type=range]{height:44px;width:96px!important}.bar select,.bar input[type=search]{min-height:44px}.lnk{min-height:44px}
 }
 .cd{padding:10px 12px}.cd h2{font-size:15px;margin:2px 0 6px}.cd h3{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);margin:14px 0 4px}
 .big{font-weight:600;margin:8px 0}.big.ok2{color:#0b6a45}.btns{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
