@@ -114,7 +114,7 @@ const DIMS=[
  {k:'init',t:'Инициатор (где указан в материалах)',get:d=>d.arch?null:(d.init||'не указан'),top:5},
  {k:'want',t:'Во что переводят участки',get:d=>d.want||null,top:6},
  {k:'gp',t:'Зона генплана в месте слушания (приблизительно)',get:d=>d.gp||null,top:6}];
-const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0,opn:0,sec:''};const OPS=new Set((X.posts||[]).flatMap(o=>o.h||[]));
+const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0,opn:0,sec:''};const opN=id=>(X.posts||[]).filter(o=>(o.h||[]).includes(id)).length,opB=id=>opN(id)?`<span class="chip" style="background:#ede9fe;color:#4c1d95">есть мнения (${opN(id)})</span>`:'';const OPS=new Set((X.posts||[]).flatMap(o=>o.h||[]));
 const dim=k=>DIMS.find(x=>x.k===k);
 function flt(except){const q=F.q.trim().toLowerCase();
  return D.filter(d=>{for(const x of DIMS){if(x.k!==except&&F[x.k]&&x.get(d)!==F[x.k])return false}
@@ -188,7 +188,7 @@ let openId=null;
 function renderRight(){if(openId!=null){$('listv').style.display='none';$('card').style.display='block';card(D.find(x=>x.id===openId))}else{$('card').style.display='none';$('listv').style.display='block';list(flt())}}
 function list(l){const k=$('so').value;const L2=[...l].sort((a,b)=>k==='remarks'?b.remarks-a.remarks:(b.end||'').localeCompare(a.end||''));$('lc').textContent=`Слушания: ${l.length}`;
  $('list').innerHTML=L2.map(d=>`<div class="it" data-id="${d.id}" tabindex="0" role="button"><div class="t">${esc(d.plain)}</div><div class="mt">${esc(d.district||'район не указан')} · ${stat(d).short}</div>`+
- `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замеч.</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.arch&&d.citywide?'<span class="chip">касается всего города</span>':d.lat==null?'<span class="chip">нет на карте</span>':'')+`</div>`).join('')||'<p style="padding:12px;color:var(--mut)">Ничего не найдено</p>'}
+ `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замеч.</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.arch&&d.citywide?'<span class="chip">касается всего города</span>':d.lat==null?'<span class="chip">нет на карте</span>':'')+opB(d.id)+`</div>`).join('')||'<p style="padding:12px;color:var(--mut)">Ничего не найдено</p>'}
 const dleft=d=>Math.round((Date.parse(d.end)-Date.parse(todayS))/864e5);
 function stat(d){if(d.arch)return{short:'постановление от '+fmt(d.start),long:'Постановление о назначении слушаний от '+fmt(d.start)+'.',open:false};if(!d.end)return{short:'срок не указан',long:'Срок приёма замечаний не указан.',open:false};const n=dleft(d);
  if(n<0)return{short:'завершено '+fmt(d.end),long:`Приём замечаний завершён ${fmt(d.end)}.`,open:false};
@@ -214,11 +214,11 @@ function templ(d){const w=d.addr||d.plain,ttl=`«${d.plain}»`+(d.addr&&!d.plain
  ['Прошу учесть / разъяснить',`Прошу учесть и разъяснить по вопросу ${ttl}:\n1) [ваш вопрос или условие];\n2) [ваш вопрос или условие].\nПрошу направить ответ в установленном порядке.`+sign]]}
 function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>');
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
- <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.sec)}</span><span class="chip">постановление от ${fmt(d.start)}</span>${d.citywide?'<span class="chip">касается всего города</span>':'<span class="chip">место приблизительно</span>'}</div>
+ <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.sec)}</span><span class="chip">постановление от ${fmt(d.start)}</span>${d.citywide?'<span class="chip">касается всего города</span>':'<span class="chip">место приблизительно</span>'}${opB(d.id)}</div>
  <p class="big">Постановление о назначении слушаний от ${fmt(d.start)}.</p><p class="lbl2">Это дата постановления, а не дата самих слушаний: дату проведения смотрите в постановлении и регламенте.</p>
  <h3>Что это</h3><p>${esc(d.expl)}</p>
  <p class="lbl2">${d.citywide?'Касается всего города: на карте точки нет, запись видна в списке и в блоке «Городские документы».':'Место на карте: '+esc(d.how||'не определено')+'. Границы неточные.'}</p>
- <h3>Итоги</h3><p>Итоги этого обсуждения не разобраны автоматически. Смотрите протокол и заключение в документах ниже.</p>
+ ${posts(d.id)}<h3>Итоги</h3><p>Итоги этого обсуждения не разобраны автоматически. Смотрите протокол и заключение в документах ниже.</p>
  <h3>Документы</h3><p>${dl||'<span class="lbl2">Документы не приложены.</span>'}</p>
  <p><a class="lnk" href="${esc(d.url)}" target="_blank" rel="noopener">Страница раздела на портале мэрии</a></p>
  <details><summary>Официальное название</summary><p>${esc(d.title)}</p></details><p><a class="lnk" href="${BOT}?start=fb_${d.id}" target="_blank" rel="noopener">Нашли ошибку? Сообщить по записи №${d.id}</a></p></div>`;
@@ -295,7 +295,7 @@ function opn(){const P=X.posts||[],au=[...new Set(P.map(o=>o.a))],tp=[...new Set
  const up=()=>{const a=$('opa').value,t=$('opt').value,f=$('opd').value;const l=P.filter(o=>(!a||o.a===a)&&(!t||o.t===t)&&(!f||(o.d||'')>=f));$('opl').innerHTML=(l.length?l.map(postHtml).join(''):'<p class="lbl2">Ничего не найдено.</p>')+`<p class="lbl2">Показано ${l.length} из ${P.length}.</p>`};
  ['opa','opt','opd'].forEach(i=>$(i).onchange=up);$('opnx').onclick=()=>{$('opn').style.display='none';$('cdc').style.display='none'};up()}}
 function cdc(){const A=D.filter(d=>d.arch),secs=[...new Set(A.map(d=>d.sec))];
- $('cdc').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Городские документы</h2><button class="rst" id="cdcx">Закрыть</button></div><p class="lbl2">Генеральный план, правила землепользования и застройки (ПЗЗ), смена вида использования: записи архивных разделов портала мэрии за 2009-2025. Дата в списке - дата постановления о назначении слушаний, а не дата самих слушаний. Итоги автоматически не разобраны, документы по ссылкам.</p>`+secs.map(s=>`<h3>${esc(s)} (${A.filter(d=>d.sec===s).length})</h3>`+A.filter(d=>d.sec===s).sort((a,b)=>(b.start||'').localeCompare(a.start||'')).map(d=>`<div class="pr" data-open="${d.id}" tabindex="0" role="button"><b>${esc(d.plain)}</b><br><span class="lbl2">постановление от ${fmt(d.start)} · ${d.citywide?'касается всего города':'место приблизительно'}</span></div>`).join('')).join('');
+ $('cdc').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Городские документы</h2><button class="rst" id="cdcx">Закрыть</button></div><p class="lbl2">Генеральный план, правила землепользования и застройки (ПЗЗ), смена вида использования: записи архивных разделов портала мэрии за 2009-2025. Дата в списке - дата постановления о назначении слушаний, а не дата самих слушаний. Итоги автоматически не разобраны, документы по ссылкам.</p>`+secs.map(s=>`<h3>${esc(s)} (${A.filter(d=>d.sec===s).length})</h3>`+A.filter(d=>d.sec===s).sort((a,b)=>(b.start||'').localeCompare(a.start||'')).map(d=>`<div class="pr" data-open="${d.id}" tabindex="0" role="button"><b>${esc(d.plain)}</b><br><span class="lbl2">постановление от ${fmt(d.start)} · ${d.citywide?'касается всего города':'место приблизительно'} ${opB(d.id)}</span></div>`).join('')).join('');
  $('cdcx').onclick=()=>{$('cdc').style.display='none'};
  $('cdc').onclick=e=>{const p=e.target.closest('[data-open]');if(p){$('cdc').style.display='none';openCard(+p.dataset.open,true);const d=D.find(x=>x.id===+p.dataset.open);if(d.lat!=null&&innerWidth>940)focusOn(d.id)}}}
 $('cdcb').onclick=()=>{cdc();$('cdc').style.display='block'};
