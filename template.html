@@ -124,7 +124,7 @@ function flt(except){const q=F.q.trim().toLowerCase();
   if(q&&!(d.plain+' '+d.title+' '+(d.addr||'')+' '+(d.init||'')).toLowerCase().includes(q))return false;return true})}
 // ---------- карта
 const CITY=[[57.5257,39.7036],[57.7753,40.0031]];
-const m=L.map('m',{attributionControl:false,zoomSnap:0.5,zoomDelta:1,wheelDebounceTime:60,wheelPxPerZoomLevel:90}).fitBounds(CITY);
+const m=L.map('m',{attributionControl:false,zoomSnap:0.5,zoomDelta:1,wheelDebounceTime:60,wheelPxPerZoomLevel:90}).setView([57.6261,39.8845],11);let touched=false;['mousedown','touchstart','wheel','keydown'].forEach(ev=>$('m').addEventListener(ev,()=>{touched=true},{passive:true}));
 L.control.attribution({prefix:false}).addTo(m);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'}).addTo(m);
 const A=[57.775310,39.703643,57.525664,40.003073];// N,W,S,E
@@ -155,9 +155,9 @@ function opIcons(d){const by={};(X.posts||[]).filter(o=>(o.h||[]).includes(d.id)
   b.bindPopup(opPopup(a,l),{maxWidth:300,autoPanPadding:[20,20]});
   b.on('add',()=>{const e=b.getElement();if(e){e.setAttribute('role','button');e.dataset.h=d.id;e.classList.toggle('sel',d.id===openId);e.setAttribute('aria-label','Мнение: '+a+', '+(l[0].d||''))}});b.addTo(layer)})}
 function drawMap(list){layer.clearLayers();mk={};list.filter(d=>d.lat!=null).forEach(d=>{const o=shapeOf(d);mk[d.id]=o;o.addTo(layer);if(OPS.has(d.id)&&SHOWOP)opIcons(d)})}
-function focusOn(id){const o=mk[id];if(!o)return;const d=D.find(x=>x.id===id);setPanel('pm');m.invalidateSize();
+function focusOn(id){touched=true;const o=mk[id];if(!o)return;const d=D.find(x=>x.id===id);setPanel('pm');m.invalidateSize();
  if(o.getBounds&&d.how&&!d.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:17});else m.setView(o.getLatLng(),Math.max(m.getZoom(),16))}
-function zoomDistrict(){outline.clearLayers();const n=F.district;
+function zoomDistrict(){touched=true;outline.clearLayers();const n=F.district;
  if(n&&DIST.box[n]){m.fitBounds(DIST.box[n],{padding:[10,10]});L.polygon(DIST.out[n],{color:'#635bff',weight:2,fill:false,dashArray:'6',interactive:false}).addTo(outline)}else m.fitBounds(CITY)}
 // клик по зоне генплана
 function zoneAt(ll){const w=GRID.w,h=GRID.h,x=Math.floor((ll.lng-A[1])/(A[3]-A[1])*w),y=Math.floor((A[0]-ll.lat)/(A[0]-A[2])*h);
@@ -318,7 +318,7 @@ function nowBanner(){const n=D.filter(d=>(d.end||'')>=todayS).length,el=$('now')
  else{el.className='none';el.innerHTML=`<b>Сейчас открытых слушаний нет</b> <span>новые появятся на портале мэрии</span>`}
  return n}
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.it,.bar2')){e.preventDefault();e.target.click()}});
-try{new ResizeObserver(()=>m.invalidateSize({pan:false})).observe($('pm'))}catch(e){}
+try{new ResizeObserver(()=>{m.invalidateSize({pan:false});const z=m.getSize();if(!touched&&z.x>50&&z.y>50)m.fitBounds(CITY,{animate:false})}).observe($('pm'))}catch(e){}
 strip();addEventListener('resize',desk);desk();const nOpen=nowBanner();if(nOpen&&!new URLSearchParams(location.search).get('id'))F.win='now';sync();
-try{const q=+new URLSearchParams(location.search).get('id');if(q&&D.some(d=>d.id===q)){const dq=D.find(d=>d.id===q);if(dq.lat!=null){const keep=innerWidth>940;setPanel('pm');m.invalidateSize();const o=mk[q];if(o&&o.getBounds&&dq.how&&!dq.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:16,animate:false});else m.setView([dq.lat,dq.lon],16,{animate:false});if(!keep)setPanel('pl')}openCard(q,true);setTimeout(()=>{m.invalidateSize()},500)}}catch(e){}
+try{const q=+new URLSearchParams(location.search).get('id');if(q&&D.some(d=>d.id===q)){touched=true;const dq=D.find(d=>d.id===q);if(dq.lat!=null){const keep=innerWidth>940;setPanel('pm');m.invalidateSize();const o=mk[q];if(o&&o.getBounds&&dq.how&&!dq.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:16,animate:false});else m.setView([dq.lat,dq.lon],16,{animate:false});if(!keep)setPanel('pl')}openCard(q,true);setTimeout(()=>{m.invalidateSize()},500)}}catch(e){}
 </script></body></html>
