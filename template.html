@@ -40,13 +40,13 @@ tr.row{cursor:pointer}tr.row:hover{background:var(--soft)}tr.det td{background:v
 <label><input type="checkbox" id="fr"> Были замечания</label>
 <label><input type="checkbox" id="fo"> Рекомендован отказ</label>
 <label><input type="checkbox" id="fu"> Меняют вид использования</label>
-<button class="lnk" id="rs">Сбросить</button><button class="lnk" id="csv">Скачать CSV</button><span class="cnt" id="cnt"></span></div>
-<div id="view-map"><div id="side"></div><div id="m"></div><div class="leg" id="leg"></div></div>
+<label title="Карта функциональных зон генплана, приблизительная привязка"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:70px"><button class="lnk" id="rs">Сбросить</button><button class="lnk" id="csv">Скачать CSV</button><span class="cnt" id="cnt"></span></div>
+<div id="view-map"><div id="side"></div><div id="m"></div><div class="leg" id="leg"></div><div class="leg" id="leg2" style="display:none;left:auto;right:10px;max-width:250px;max-height:60vh;overflow:auto"></div></div>
 <div id="view-tab"><div class="cards" id="cards"></div><div class="charts" id="charts"></div><div class="tw"><table><thead><tr id="th"></tr></thead><tbody id="tb"></tbody></table></div>
-<p style="color:var(--mut)">Что значат понятия. <b>Межевание</b> - нарезка земли на участки. <b>Планировка</b> - где будут дороги, дома, парки. <b>Условно разрешённый вид</b> - особое разрешение на другое назначение участка. <b>Отклонение</b> - разрешение построить не по общим нормам. Код зоны ПЗЗ (Ж, Ц, О...) - правила застройки, не генеральный план. Слой генплана пока не подключён.</p></div>
+<p style="color:var(--mut)">Что значат понятия. <b>Межевание</b> - нарезка земли на участки. <b>Планировка</b> - где будут дороги, дома, парки. <b>Условно разрешённый вид</b> - особое разрешение на другое назначение участка. <b>Отклонение</b> - разрешение построить не по общим нормам. Код зоны ПЗЗ (Ж, Ц, О...) - правила застройки, не генеральный план. Слой «Генплан» на карте - растровая карта функциональных зон с сайта мэрии, привязана приблизительно.</p></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
-const D=__DATA__;
+const D=__DATA__;const GL=__LEGEND__;
 const COL={'Планировка и межевание':'#2a7ab9','Межевание':'#5aa9e6','Условно разрешённый вид':'#e08a1e','Отклонение от параметров':'#8e5bb5','Дорога / линейный объект':'#444','Другое':'#999'};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=i=>document.getElementById(i);
@@ -70,12 +70,15 @@ function flt(){const q=$('fq').value.trim().toLowerCase(),w=$('fw').value,lim=ne
 const m=L.map('m').setView([57.626,39.893],12);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
 const layer=L.layerGroup().addTo(m),mk={};
+const gpl=L.imageOverlay('genplan.webp',[[57.775310,39.703643],[57.525664,40.003073]],{opacity:.6,interactive:false});
+$('fg').onchange=()=>{$('fg').checked?gpl.addTo(m):m.removeLayer(gpl);$('leg2').style.display=$('fg').checked?'block':'none'};
+$('fgo').oninput=()=>gpl.setOpacity($('fgo').value/100);
 function pop(d){const docs=d.docs.slice(0,6).map(x=>`<a href="${esc(x.url)}" target="_blank">${esc(x.kind)}</a>`).join(' · ');
  return `<div class="pop"><h4>${esc(d.plain)}</h4><div>${esc(d.expl)}</div><p>`+
  (change(d)&&(d.was||d.want)?`<b>Было:</b> ${esc(d.was||'не указано')}<br><b>Станет:</b> ${esc(d.want||'-')}<br>`:'')+
  `<b>Район:</b> ${esc(d.district||'не указан')}<br><b>Срок:</b> ${fmt(d.start)} - ${fmt(d.end)}<br>`+
  (d.init?`<b>Инициатор:</b> ${esc(d.init)}<br>`:'')+
- (d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)}${d.zone_name?' ('+esc(d.zone_name)+')':''}<br>`:'')+
+ (d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)}${d.zone_name?' ('+esc(d.zone_name)+')':''}<br>`:'')+(d.gp?`<b>По генплану здесь:</b> ${esc(d.gp)} <small>(приблизительно)</small><br>`:'')+
  `<b>Жители:</b> ${resT(d)}; <b>замечания:</b> ${remT(d)}<br><b>Итог:</b> ${recT(d)}</p>`+
  (docs?`<div>${docs}</div>`:'')+`<div class="lbl">Точка: ${esc(d.how||'нет')}</div></div>`}
 function drawMap(list){layer.clearLayers();Object.keys(mk).forEach(k=>delete mk[k]);
@@ -85,6 +88,7 @@ function side(list){$('side').innerHTML=list.map(d=>`<div class="item" data-id="
  `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замечаний</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.lat==null?'<span class="chip">нет на карте</span>':'')+`</div>`).join('')||'<p style="padding:12px">Ничего не найдено</p>';}
 $('side').onclick=e=>{const it=e.target.closest('.item');if(it)focus(+it.dataset.id)};
 function focus(id){const mm=mk[id];if(!mm)return;m.setView(mm.getLatLng(),Math.max(m.getZoom(),14));mm.openPopup()}
+$('leg2').innerHTML='<b>Генплан: функциональные зоны</b><br>'+GL.map(l=>`<i style="background:rgb(${l.rgb});border-radius:2px"></i>${l.name}`).join('<br>')+'<br><small>Привязка приблизительная (до ~300 м). Источник: карта функциональных зон генплана, сайт мэрии.</small>';
 $('leg').innerHTML=Object.entries(COL).map(([k,v])=>`<i style="background:${v}"></i>${k}`).join('<br>')+'<br><small>Размер - число замечаний. Красная рамка - отказ. Пунктир - точное место неизвестно (центр района).</small>';
 // таблица и цифры
 const COLS=[['plain','Что предлагают'],['district','Район'],['kind','Тип'],['end','Срок до'],['init','Инициатор'],['remarks','Замечания'],['rec','Итог']];
@@ -98,7 +102,7 @@ function table(list){const L2=[...list].sort((a,b)=>{const x=a[sk]??'',y=b[sk]??
 $('tb').onclick=e=>{if(e.target.closest('a'))return;const tr=e.target.closest('tr.row');if(!tr)return;const nx=tr.nextElementSibling;
  if(nx&&nx.classList.contains('det')){nx.remove();return}const d=D.find(x=>x.id==tr.dataset.id);
  const r=document.createElement('tr');r.className='det';r.innerHTML=`<td colspan="7"><b>Официальное название:</b> ${esc(d.title)}<br>`+
- (change(d)?`<b>Было → станет:</b> ${esc(d.was||'не указано')} → ${esc(d.want||'-')}<br>`:'')+(d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)} ${esc(d.zone_name||'')}<br>`:'')+(d.cad?`<b>Кадастровый номер:</b> ${esc(d.cad)}<br>`:'')+(d.area?`<b>Площадь:</b> ${d.area} м²<br>`:'')+
+ (change(d)?`<b>Было → станет:</b> ${esc(d.was||'не указано')} → ${esc(d.want||'-')}<br>`:'')+(d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)} ${esc(d.zone_name||'')}<br>`:'')+(d.gp?`<b>По генплану в этой точке:</b> ${esc(d.gp)} (приблизительно)<br>`:'')+(d.cad?`<b>Кадастровый номер:</b> ${esc(d.cad)}<br>`:'')+(d.area?`<b>Площадь:</b> ${d.area} м²<br>`:'')+
  `<b>Жители:</b> ${resT(d)}<br><b>Срок:</b> ${fmt(d.start)} - ${fmt(d.end)}<br>`+d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank">${esc(x.kind)}</a>`).join(' · ')+
  ` · <a href="${esc(d.url)}" target="_blank">Страница мэрии</a>`+(d.lat!=null?` · <button class="lnk" data-map="${d.id}">Показать на карте</button>`:'')+`</td>`;tr.after(r)};
 $('tb').addEventListener('click',e=>{const b=e.target.closest('[data-map]');if(b){show('map');focus(+b.dataset.map)}});
