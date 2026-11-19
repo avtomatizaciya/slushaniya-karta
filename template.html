@@ -66,6 +66,7 @@ main{display:grid;grid-template-columns:clamp(250px,22vw,310px) minmax(0,1fr) cl
 .pm{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pm ul{margin:4px 0;padding-left:16px}.pm b{color:var(--ink)}
 @media(max-width:520px){.pm{grid-template-columns:1fr}}
 .pr{padding:5px 7px;border:1px solid var(--line);border-radius:7px;margin:4px 0;cursor:pointer}.pr:hover{background:var(--soft)}.lbl2{color:var(--mut);font-size:12px}
+.opb{background:#7a3fc7;color:#fff;border:2px solid #fff;border-radius:50%;font:700 11px/16px sans-serif;text-align:center;box-shadow:0 1px 4px #0006}
 #opn{position:fixed;inset:6px;z-index:2000;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 40px #0006;overflow:auto;padding:12px 14px}#opn h2{font-size:16px;margin:0 0 4px}#opn .po{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0}#opn .po p{margin:4px 0;font-size:13px}#opn select{min-height:32px}
 #ctl{position:fixed;inset:6px;z-index:2000;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 40px #0006;overflow:auto;padding:12px 14px}
 #ctl h2{font-size:16px;margin:0 0 4px}#ctl h3{font-size:13px;margin:14px 0 4px}#ctl table{border-collapse:collapse;width:100%;font-size:12px}#ctl th,#ctl td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}#ctl th{color:var(--mut);font-weight:600}
@@ -80,7 +81,7 @@ main{display:grid;grid-template-columns:clamp(250px,22vw,310px) minmax(0,1fr) cl
 <select id="fy" aria-label="Год"><option value="">Все годы</option></select>
 <select id="fw" aria-label="Срок приёма замечаний"><option value="">Любой срок</option><option value="now">Идут сейчас</option><option value="7">За 7 дней</option><option value="30">За 30 дней</option><option value="90">За 90 дней</option><option value="year">Этот год</option></select>
 <input id="fq" type="search" placeholder="Улица, адрес, слово..." size="16" aria-label="Поиск по улице, адресу или слову">
-<label class="cb" title="Слушания, где были замечания жителей"><input type="checkbox" id="fr"> <span>Были замечания жителей</span></label><label class="cb" title="Организатор рекомендовал отказать"><input type="checkbox" id="fo"> <span>Рекомендован отказ</span></label><label class="cb" title="Меняют вид разрешённого использования участка"><input type="checkbox" id="fu"> <span>Меняют вид использования</span></label><button class="lnk" id="ctlb">Контроль</button><button class="lnk" id="opnb">Мнения</button><button class="lnk" id="csv">CSV</button><a class="lnk" id="fbk" href="https://t.me/slushaniya_yaroslavl_bot?start=fb_map" target="_blank" rel="noopener">Сообщить об ошибке</a></span><label title="Карта функциональных зон генплана; клик по зоне - описание"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:60px" aria-label="Прозрачность слоя генплана">
+<label class="cb" title="Слушания, где были замечания жителей"><input type="checkbox" id="fr"> <span>Были замечания жителей</span></label><label class="cb" title="Организатор рекомендовал отказать"><input type="checkbox" id="fo"> <span>Рекомендован отказ</span></label><label class="cb" title="Меняют вид разрешённого использования участка"><input type="checkbox" id="fu"> <span>Меняют вид использования</span></label><label class="cb" title="Слушания, о которых есть публичные посты градозащитников"><input type="checkbox" id="fm"> <span>Есть мнения градозащитников</span></label><button class="lnk" id="ctlb">Контроль</button><button class="lnk" id="opnb">Мнения</button><button class="lnk" id="csv">CSV</button><a class="lnk" id="fbk" href="https://t.me/slushaniya_yaroslavl_bot?start=fb_map" target="_blank" rel="noopener">Сообщить об ошибке</a></span><label title="Карта функциональных зон генплана; клик по зоне - описание"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:60px" aria-label="Прозрачность слоя генплана">
 <button class="rst" id="rs">Сбросить всё</button><span class="chips" id="chips"></span><span id="cnt" style="margin-left:auto;color:var(--mut)"></span></div>
 <main id="main">
 <section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"></div><div id="charts"></div></section>
@@ -109,12 +110,12 @@ const DIMS=[
  {k:'init',t:'Инициатор (где указан в материалах)',get:d=>d.init||'не указан',top:5},
  {k:'want',t:'Во что переводят участки',get:d=>d.want||null,top:6},
  {k:'gp',t:'Зона генплана в месте слушания (приблизительно)',get:d=>d.gp||null,top:6}];
-const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0};
+const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0,opn:0};const OPS=new Set((X.posts||[]).flatMap(o=>o.h||[]));
 const dim=k=>DIMS.find(x=>x.k===k);
 function flt(except){const q=F.q.trim().toLowerCase();
  return D.filter(d=>{for(const x of DIMS){if(x.k!==except&&F[x.k]&&x.get(d)!==F[x.k])return false}
   if(F.win&&!(F.win==='now'?(d.end||'')>=todayS:F.win==='year'?(d.start||'').startsWith(todayS.slice(0,4)):(d.end||'')>=back(+F.win)))return false;
-  if(F.rem&&!d.remarks)return false;if(F.rej&&d.rec!=='отказ')return false;if(F.chg&&!change(d))return false;
+  if(F.rem&&!d.remarks)return false;if(F.rej&&d.rec!=='отказ')return false;if(F.chg&&!change(d))return false;if(F.opn&&!OPS.has(d.id))return false;
   if(q&&!(d.plain+' '+d.title+' '+(d.addr||'')+' '+(d.init||'')).toLowerCase().includes(q))return false;return true})}
 // ---------- карта
 const CITY=[[57.5257,39.7036],[57.7753,40.0031]];
@@ -138,7 +139,7 @@ function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==
  else if(s&&s[0]==='circle')o=L.circle([d.lat,d.lon],{...base,radius:s[1],fillOpacity:.15});
  else o=L.circleMarker([d.lat,d.lon],{...base,color:bad?'#c00':'#fff',weight:bad?3:1,radius:rough?9:7+Math.min(d.remarks,80)/6,fillOpacity:rough?.35:.85});
  o.on('click',()=>openCard(d.id,true));if(d.label)o.bindTooltip(esc(d.label),{permanent:true,direction:'center',className:'lbl',opacity:1});return o}
-function drawMap(list){layer.clearLayers();mk={};list.filter(d=>d.lat!=null).forEach(d=>{const o=shapeOf(d);mk[d.id]=o;o.addTo(layer)})}
+function drawMap(list){layer.clearLayers();mk={};list.filter(d=>d.lat!=null).forEach(d=>{const o=shapeOf(d);mk[d.id]=o;o.addTo(layer);if(OPS.has(d.id)){const b=L.marker([d.lat,d.lon],{icon:L.divIcon({className:'opb',html:'М',iconSize:[20,20]}),title:'Есть мнения градозащитников',keyboard:false});b.on('click',()=>openCard(d.id,true));b.addTo(layer)}})}
 function focusOn(id){const o=mk[id];if(!o)return;const d=D.find(x=>x.id===id);setPanel('pm');m.invalidateSize();
  if(o.getBounds&&d.how&&!d.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:17});else m.setView(o.getLatLng(),Math.max(m.getZoom(),16))}
 function zoomDistrict(){outline.clearLayers();const n=F.district;
@@ -230,15 +231,15 @@ function card(d){const st=stat(d),K=X.kinds[d.ckey]||X.kinds.other,docs=d.docs.m
  $('card').onclick=e=>{const p=e.target.closest('[data-open]');if(p)openCard(+p.dataset.open)}}
 // ---------- состояние
 function tog(k,v){F[k]=F[k]===v?'':v;sync();if(k==='district')zoomDistrict()}
-function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',{now:'Идут сейчас',year:'Этот год'}[F.win]||'За '+F.win+' дн.']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);
+function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',{now:'Идут сейчас',year:'Этот год'}[F.win]||'За '+F.win+' дн.']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);if(F.opn)c.push(['opn','Есть мнения']);
  $('chips').innerHTML=c.map(([k,t])=>`<span class="fc" data-x="${k}"><span title="${esc(t)}">${esc(t)}</span><b>×</b></span>`).join('')}
 $('chips').onclick=e=>{const c=e.target.closest('[data-x]');if(!c)return;const k=c.dataset.x;F[k]=(typeof F[k]==='number')?0:'';sync();if(k==='district')zoomDistrict()};
-function ctrls(){$('fd').value=F.district;$('fk').value=F.kind;$('fy').value=F.year;$('fw').value=F.win;$('fq').value=F.q;$('fr').checked=!!F.rem;$('fo').checked=!!F.rej;$('fu').checked=!!F.chg}
+function ctrls(){$('fd').value=F.district;$('fk').value=F.kind;$('fy').value=F.year;$('fw').value=F.win;$('fq').value=F.q;$('fr').checked=!!F.rem;$('fo').checked=!!F.rej;$('fu').checked=!!F.chg;$('fm').checked=!!F.opn}
 function sync(){ctrls();const l=flt();$('cnt').textContent=`Найдено: ${l.length} из ${D.length}`;chips();kpis(l);charts();renderRight();drawMap(l);legend2()}
 const uniq=a=>[...new Set(a)].filter(Boolean).sort();
 uniq(D.map(d=>d.district)).forEach(v=>$('fd').add(new Option(v,v)));uniq(D.map(d=>d.kind)).forEach(v=>$('fk').add(new Option(v,v)));uniq(D.map(d=>(d.start||'').slice(0,4))).reverse().forEach(v=>$('fy').add(new Option(v,v)));
 $('fd').onchange=()=>{F.district=$('fd').value;sync();zoomDistrict()};$('fk').onchange=()=>{F.kind=$('fk').value;sync()};$('fy').onchange=()=>{F.year=$('fy').value;sync()};$('fw').onchange=()=>{F.win=$('fw').value;sync()};
-$('fq').oninput=()=>{F.q=$('fq').value;sync()};$('fr').onchange=()=>{F.rem=$('fr').checked?1:0;sync()};$('fo').onchange=()=>{F.rej=$('fo').checked?1:0;sync()};$('fu').onchange=()=>{F.chg=$('fu').checked?1:0;sync()};
+$('fq').oninput=()=>{F.q=$('fq').value;sync()};$('fr').onchange=()=>{F.rem=$('fr').checked?1:0;sync()};$('fo').onchange=()=>{F.rej=$('fo').checked?1:0;sync()};$('fu').onchange=()=>{F.chg=$('fu').checked?1:0;sync()};$('fm').onchange=()=>{F.opn=$('fm').checked?1:0;sync()};
 $('ft').onclick=()=>$('bar').classList.toggle('open');
 // ---------- панель «Контроль»
 function ctlStats(l){const r=l.filter(d=>d.has_result),pk=r.filter(d=>d.residents!=null),rk=r.filter(d=>d.rem!=null),wr=r.filter(d=>d.rem===true),rc=r.filter(d=>d.rec);
