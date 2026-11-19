@@ -2,124 +2,170 @@
 <title>Слушания на карте</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
-:root{--bg:#fff;--ink:#0a2540;--mut:#6b7c93;--line:#e3e8ee;--soft:#f6f9fc;--a:#635bff;--bad:#c62828;color-scheme:light}
-*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
-header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line)}
-header h1{font-size:17px;margin:0}
-.tabs button{border:1px solid var(--line);background:#fff;padding:7px 14px;border-radius:999px;cursor:pointer;font:inherit}
-.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 14px;background:var(--soft);border-bottom:1px solid var(--line)}
-.filters select,.filters input[type=search]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
-.filters label{display:flex;gap:4px;align-items:center;white-space:nowrap}
-.filters .cnt{margin-left:auto;color:var(--mut)}
-button.lnk{border:0;background:none;color:var(--a);cursor:pointer;font:inherit;padding:0}
-#view-map{display:flex;height:calc(100vh - 112px)}#side{width:330px;overflow:auto;border-right:1px solid var(--line)}#m{flex:1}
-.item{padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer}.item:hover{background:var(--soft)}
-.item b{display:block;font-weight:600}.item small{color:var(--mut)}
-.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;background:#eef1f6;margin:0 4px 2px 0}.chip.bad{background:#fdeaea;color:var(--bad)}.chip.ok{background:#e7f6ee;color:#0e7a50}
-#view-tab{display:none;padding:14px;max-width:1300px;margin:0 auto}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
-.card{border:1px solid var(--line);border-radius:12px;padding:10px 12px}.card b{display:block;font-size:24px}.card span{color:var(--mut)}
-.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:16px}
-.chart h3{font-size:14px;margin:0 0 6px}.bar{display:flex;align-items:center;gap:6px;margin:3px 0;font-size:13px}.bar i{display:block;height:14px;background:var(--a);border-radius:3px;min-width:2px}.bar span:first-child{width:130px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}th{cursor:pointer;background:var(--soft);position:sticky;top:0;white-space:nowrap}
-tr.row{cursor:pointer}tr.row:hover{background:var(--soft)}tr.det td{background:var(--soft);font-size:13px}
-.tw{overflow:auto;max-height:70vh;border:1px solid var(--line);border-radius:10px}
-.pop{max-width:290px}.pop h4{margin:0 0 4px;font-size:14px}.pop .lbl{color:var(--mut)}
-.leg{position:absolute;z-index:500;bottom:18px;left:344px;background:#fffe;padding:6px 9px;border-radius:8px;font-size:12px;box-shadow:0 1px 4px #0003}
-.leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
-@media(max-width:760px){#view-map{flex-direction:column-reverse;height:auto}#side{width:auto;max-height:38vh}#m{height:55vh;flex:none}.leg{left:10px}}
+:root{--bg:#f3f5f9;--card:#fff;--ink:#0a2540;--mut:#6b7c93;--line:#e3e8ee;--soft:#f6f9fc;--a:#635bff;--a2:#e8e6ff;--bad:#c62828;color-scheme:light}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}
+body{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;height:100dvh;font:13px/1.4 system-ui,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+header{display:flex;gap:10px;align-items:center;padding:6px 12px;background:var(--card);border-bottom:1px solid var(--line);min-width:0}
+header h1{font-size:16px;margin:0;white-space:nowrap}header small{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.bot{background:#229ed9;color:#fff;text-decoration:none;padding:6px 12px;border-radius:999px;font-weight:600;white-space:nowrap}
+.bar{display:flex;gap:6px 8px;align-items:center;padding:6px 12px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.bar select,.bar input[type=search]{padding:5px 7px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;max-width:100%}
+.bar label{display:flex;gap:3px;align-items:center;white-space:nowrap}
+button.lnk{border:0;background:none;color:var(--a);cursor:pointer;font:inherit;padding:2px 4px}
+button.rst{border:1px solid var(--a);background:#fff;color:var(--a);border-radius:999px;padding:4px 12px;cursor:pointer;font:inherit;font-weight:600}
+.chips{display:flex;gap:4px;flex-wrap:wrap}.fc{background:var(--a2);color:#3b33c9;border-radius:999px;padding:2px 4px 2px 9px;cursor:pointer;display:inline-flex;gap:4px;align-items:center;max-width:260px}.fc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fc b{padding:0 5px}
+main{display:grid;grid-template-columns:clamp(250px,22vw,310px) minmax(0,1fr) clamp(290px,26vw,380px);gap:8px;padding:8px;min-height:0}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:auto;min-height:0;min-width:0}
+#pm{position:relative;overflow:hidden}#m{position:absolute;inset:0}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:5px 7px}.kpi b{display:block;font-size:19px;line-height:1.1}.kpi span{color:var(--mut);font-size:11px}
+.chart{padding:4px 10px 8px;border-top:1px solid var(--line)}.chart h3{font-size:12px;margin:6px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em;font-weight:600}
+.bar2{display:grid;grid-template-columns:minmax(80px,1fr) 70px 26px;gap:6px;align-items:center;padding:2px 3px;border-radius:5px;cursor:pointer}.bar2:hover{background:var(--soft)}
+.bar2 .nm{overflow-wrap:anywhere;line-height:1.2}.bar2 i{display:block;height:11px;background:var(--a);border-radius:3px;min-width:2px}.bar2 .n{text-align:right;color:var(--mut)}
+.bar2.sel{background:var(--a2);font-weight:600}.has-sel .bar2:not(.sel) i{opacity:.35}.bar2.muted .nm{color:var(--mut)}
+.more{color:var(--a);cursor:pointer;padding:2px 3px}
+.lh{display:flex;gap:6px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);z-index:2}.lh b{flex:1}
+.it{padding:7px 9px;border-bottom:1px solid var(--line);cursor:pointer}.it:hover{background:var(--soft)}
+.it .t{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.it.open .t{display:block}
+.it .mt{color:var(--mut);font-size:12px}
+.chip{display:inline-block;padding:0 7px;border-radius:999px;font-size:11px;background:#eef1f6;margin:2px 3px 0 0}.chip.bad{background:#fdeaea;color:var(--bad)}.chip.ok{background:#e7f6ee;color:#0e7a50}
+.dt{margin-top:6px;font-size:12px;line-height:1.5;cursor:default}.dt a{color:var(--a)}
+.leg{position:absolute;z-index:500;background:#fffe;border-radius:8px;font-size:11px;box-shadow:0 1px 4px #0003;padding:5px 8px}
+#leg{left:8px;bottom:22px;max-width:240px}#leg2{right:8px;top:8px;max-width:190px;max-height:60%;overflow:auto;display:none;font-size:10px;line-height:1.25}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}#leg2 i{border-radius:2px}
+.leg2i{cursor:pointer;padding:1px 2px;border-radius:4px;display:block}.leg2i:hover,.leg2i.sel{background:var(--a2)}
+.lbl{background:#fffd;border:0;box-shadow:none;font-size:11px;padding:0 3px;color:#222}#m:not(.z15) .lbl{display:none}
+.pop{max-width:290px}.pop h4{margin:0 0 3px;font-size:13px}.pop .lbl2{color:var(--mut)}.pop p{margin:4px 0}
+#mtabs{display:none}#ft{display:none}#more{display:contents}
+@media(max-width:940px){
+ body{grid-template-rows:auto auto minmax(0,1fr) auto}
+ main{grid-template-columns:1fr;padding:4px}.panel{display:none}.panel.on{display:block}#pm.on{display:block}
+ #mtabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border-top:1px solid var(--line)}
+ #mtabs button{border:0;background:none;padding:10px 4px;font:inherit;font-weight:600;color:var(--mut)}#mtabs button.on{color:var(--a);box-shadow:inset 0 -3px 0 var(--a)}
+ header small{display:none}#ft{display:inline-block}#more{display:none;flex-wrap:wrap;gap:6px;width:100%}.bar.open #more{display:flex}.chips{width:100%}
+ #leg{max-width:150px;bottom:6px}
+}
 </style></head><body>
-<header><h1>Слушания Ярославля</h1><div class="tabs"><button id="t1" class="on">Карта</button><button id="t2">Таблица и цифры</button></div><small style="color:var(--mut)">Публичные обсуждения мэрии 2023-2026. Данные с портала мэрии, итоги - из заключений.</small></header>
-<div class="filters">
-<select id="fd"><option value="">Все районы</option></select>
+<header><h1>Слушания Ярославля</h1><small>Публичные обсуждения мэрии 2023-2026. Данные с портала мэрии, итоги - из заключений.</small><a class="bot" href="https://t.me/slushaniya_yaroslavl_bot" target="_blank" rel="noopener">Уведомления в Telegram</a></header>
+<div class="bar" id="bar"><button class="rst" id="ft">Фильтры</button><span id="more"><select id="fd"><option value="">Все районы</option></select>
 <select id="fk"><option value="">Все типы вопросов</option></select>
 <select id="fy"><option value="">Все годы</option></select>
 <select id="fw"><option value="">Любой срок</option><option value="now">Идут сейчас</option><option value="90">За 90 дней</option></select>
-<input id="fq" type="search" placeholder="Улица, адрес, слово...">
-<label><input type="checkbox" id="fr"> Были замечания</label>
-<label><input type="checkbox" id="fo"> Рекомендован отказ</label>
-<label><input type="checkbox" id="fu"> Меняют вид использования</label>
-<label title="Карта функциональных зон генплана, приблизительная привязка"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:70px"><button class="lnk" id="rs">Сбросить</button><button class="lnk" id="csv">Скачать CSV</button><span class="cnt" id="cnt"></span></div>
-<div id="view-map"><div id="side"></div><div id="m"></div><div class="leg" id="leg"></div><div class="leg" id="leg2" style="display:none;left:auto;right:10px;max-width:250px;max-height:60vh;overflow:auto"></div></div>
-<div id="view-tab"><div class="cards" id="cards"></div><div class="charts" id="charts"></div><div class="tw"><table><thead><tr id="th"></tr></thead><tbody id="tb"></tbody></table></div>
-<p style="color:var(--mut)">Что значат понятия. <b>Межевание</b> - нарезка земли на участки. <b>Планировка</b> - где будут дороги, дома, парки. <b>Условно разрешённый вид</b> - особое разрешение на другое назначение участка. <b>Отклонение</b> - разрешение построить не по общим нормам. Код зоны ПЗЗ (Ж, Ц, О...) - правила застройки, не генеральный план. Слой «Генплан» на карте - растровая карта функциональных зон с сайта мэрии, привязана приблизительно.</p></div>
+<input id="fq" type="search" placeholder="Улица, адрес, слово..." size="16">
+<label><input type="checkbox" id="fr"> Замечания</label><label><input type="checkbox" id="fo"> Отказ</label><label><input type="checkbox" id="fu"> Меняют вид</label><button class="lnk" id="csv">CSV</button></span><label title="Карта функциональных зон генплана; клик по зоне - описание"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:60px">
+<button class="rst" id="rs">Сбросить всё</button><span class="chips" id="chips"></span><span id="cnt" style="margin-left:auto;color:var(--mut)"></span></div>
+<main>
+<section class="panel" id="pc"><div class="kpis" id="kpis"></div><div id="charts"></div></section>
+<section class="panel on" id="pm"><div id="m"></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
+<section class="panel" id="pl"><div class="lh"><b id="lc"></b><select id="so"><option value="end">по дате</option><option value="remarks">по замечаниям</option></select></div><div id="list"></div></section>
+</main>
+<nav id="mtabs"><button data-p="pm" class="on">Карта</button><button data-p="pc">Цифры</button><button data-p="pl">Список</button></nav>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
-const D=__DATA__;const GL=__LEGEND__;
+const D=__DATA__,GL=__LEGEND__,GRID=__GRID__,DIST=__DIST__;
 const COL={'Планировка и межевание':'#2a7ab9','Межевание':'#5aa9e6','Условно разрешённый вид':'#e08a1e','Отклонение от параметров':'#8e5bb5','Дорога / линейный объект':'#444','Другое':'#999'};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=i=>document.getElementById(i);
 const fmt=d=>d?d.split('-').reverse().join('.'):'-';
-const todayS=new Date().toISOString().slice(0,10);
+const todayS=new Date().toISOString().slice(0,10),lim90=new Date(Date.now()-90*864e5).toISOString().slice(0,10);
 const recT=d=>!d.has_result?'Итог не получен':d.rec==='отказ'?'Рекомендован отказ':d.rec?'Рекомендовано утвердить':'Итог не распознан';
 const remT=d=>!d.has_result?'-':d.remarks?`${d.remarks} замеч.`:'без замечаний';
 const resT=d=>d.residents==null?'-':d.residents?'участвовали':'не участвовали';
 const change=d=>d.kind==='Условно разрешённый вид';
-// фильтры
-const uniq=a=>[...new Set(a)].filter(Boolean).sort();
-uniq(D.map(d=>d.district)).forEach(v=>$('fd').add(new Option(v,v)));
-uniq(D.map(d=>d.kind)).forEach(v=>$('fk').add(new Option(v,v)));
-uniq(D.map(d=>(d.start||'').slice(0,4))).reverse().forEach(v=>$('fy').add(new Option(v,v)));
-const ids=['fd','fk','fy','fw','fq','fr','fo','fu'];
-function flt(){const q=$('fq').value.trim().toLowerCase(),w=$('fw').value,lim=new Date(Date.now()-90*864e5).toISOString().slice(0,10);
- return D.filter(d=>(!$('fd').value||d.district===$('fd').value)&&(!$('fk').value||d.kind===$('fk').value)&&(!$('fy').value||(d.start||'').startsWith($('fy').value))
- &&(!w||(w==='now'?(d.end||'')>=todayS:(d.end||'')>=lim))&&(!$('fr').checked||d.remarks>0)&&(!$('fo').checked||d.rec==='отказ')&&(!$('fu').checked||change(d))
- &&(!q||(d.plain+' '+d.title+' '+(d.addr||'')+' '+(d.init||'')).toLowerCase().includes(q)));}
-// карта
-const m=L.map('m').setView([57.626,39.893],12);
+const DIMS=[
+ {k:'district',t:'Район',get:d=>d.district||'не указан',top:7},
+ {k:'kind',t:'Тип вопроса',get:d=>d.kind,top:7},
+ {k:'year',t:'Год',get:d=>(d.start||'').slice(0,4)||null,top:6,sortKey:true},
+ {k:'init',t:'Инициатор (где указан в материалах)',get:d=>d.init||'не указан',top:5},
+ {k:'want',t:'Во что переводят участки',get:d=>d.want||null,top:6},
+ {k:'gp',t:'Зона генплана в месте слушания (приблизительно)',get:d=>d.gp||null,top:6}];
+const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0};
+const dim=k=>DIMS.find(x=>x.k===k);
+function flt(except){const q=F.q.trim().toLowerCase();
+ return D.filter(d=>{for(const x of DIMS){if(x.k!==except&&F[x.k]&&x.get(d)!==F[x.k])return false}
+  if(F.win&&!(F.win==='now'?(d.end||'')>=todayS:(d.end||'')>=lim90))return false;
+  if(F.rem&&!d.remarks)return false;if(F.rej&&d.rec!=='отказ')return false;if(F.chg&&!change(d))return false;
+  if(q&&!(d.plain+' '+d.title+' '+(d.addr||'')+' '+(d.init||'')).toLowerCase().includes(q))return false;return true})}
+// ---------- карта
+const CITY=[[57.5257,39.7036],[57.7753,40.0031]];
+const m=L.map('m',{zoomSnap:0.5,zoomDelta:1,wheelDebounceTime:60,wheelPxPerZoomLevel:90}).fitBounds(CITY);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(m);
-const layer=L.layerGroup().addTo(m),mk={};
-const gpl=L.imageOverlay('genplan.webp',[[57.775310,39.703643],[57.525664,40.003073]],{opacity:.6,interactive:false});
-$('fg').onchange=()=>{$('fg').checked?gpl.addTo(m):m.removeLayer(gpl);$('leg2').style.display=$('fg').checked?'block':'none'};
-$('fgo').oninput=()=>gpl.setOpacity($('fgo').value/100);
-function pop(d){const docs=d.docs.slice(0,6).map(x=>`<a href="${esc(x.url)}" target="_blank">${esc(x.kind)}</a>`).join(' · ');
+const A=[57.775310,39.703643,57.525664,40.003073];// N,W,S,E
+const gpImg=new Image();gpImg.src='genplan.webp';
+const GP=L.GridLayer.extend({createTile(c,done){const t=document.createElement('canvas'),s=this.getTileSize();t.width=s.x;t.height=s.y;
+ const draw=()=>{const nw=m.unproject([c.x*s.x,c.y*s.y],c.z),se=m.unproject([(c.x+1)*s.x,(c.y+1)*s.y],c.z),W=gpImg.naturalWidth,H=gpImg.naturalHeight;
+  const ix=lo=>(lo-A[1])/(A[3]-A[1])*W,iy=la=>(A[0]-la)/(A[0]-A[2])*H;
+  const x0=ix(nw.lng),x1=ix(se.lng),y0=iy(nw.lat),y1=iy(se.lat),cx0=Math.max(0,x0),cx1=Math.min(W,x1),cy0=Math.max(0,y0),cy1=Math.min(H,y1);
+  if(cx1>cx0&&cy1>cy0){const kx=s.x/(x1-x0),ky=s.y/(y1-y0);t.getContext('2d').drawImage(gpImg,cx0,cy0,cx1-cx0,cy1-cy0,(cx0-x0)*kx,(cy0-y0)*ky,(cx1-cx0)*kx,(cy1-cy0)*ky)}setTimeout(()=>done(null,t),0)};
+ gpImg.complete&&gpImg.naturalWidth?draw():gpImg.addEventListener('load',draw,{once:true});return t}});
+const gpl=new GP({opacity:.6,tileSize:256,updateWhenZooming:false,keepBuffer:1});
+const layer=L.featureGroup().addTo(m),outline=L.layerGroup().addTo(m);let mk={};
+function pop(d){const docs=d.docs.slice(0,6).map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.kind)}</a>`).join(' · ');
  return `<div class="pop"><h4>${esc(d.plain)}</h4><div>${esc(d.expl)}</div><p>`+
  (change(d)&&(d.was||d.want)?`<b>Было:</b> ${esc(d.was||'не указано')}<br><b>Станет:</b> ${esc(d.want||'-')}<br>`:'')+
- `<b>Район:</b> ${esc(d.district||'не указан')}<br><b>Срок:</b> ${fmt(d.start)} - ${fmt(d.end)}<br>`+
- (d.init?`<b>Инициатор:</b> ${esc(d.init)}<br>`:'')+
- (d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)}${d.zone_name?' ('+esc(d.zone_name)+')':''}<br>`:'')+(d.gp?`<b>По генплану здесь:</b> ${esc(d.gp)} <small>(приблизительно)</small><br>`:'')+
- `<b>Жители:</b> ${resT(d)}; <b>замечания:</b> ${remT(d)}<br><b>Итог:</b> ${recT(d)}</p>`+
- (docs?`<div>${docs}</div>`:'')+`<div class="lbl">Точка: ${esc(d.how||'нет')}</div></div>`}
-function drawMap(list){layer.clearLayers();Object.keys(mk).forEach(k=>delete mk[k]);
- list.filter(d=>d.lat!=null).forEach(d=>{const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ';
- mk[d.id]=L.circleMarker([d.lat,d.lon],{radius:7+Math.min(d.remarks,80)/4,color:bad?'#c00':'#fff',weight:bad?3:1,fillColor:COL[d.kind],fillOpacity:rough?.35:.8,dashArray:rough?'4':null}).addTo(layer).bindPopup(()=>pop(d),{maxWidth:310})});}
-function side(list){$('side').innerHTML=list.map(d=>`<div class="item" data-id="${d.id}"><b>${esc(d.plain)}</b><small>${esc(d.district||'район не указан')} · ${fmt(d.end)}</small><br>`+
- `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замечаний</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.lat==null?'<span class="chip">нет на карте</span>':'')+`</div>`).join('')||'<p style="padding:12px">Ничего не найдено</p>';}
-$('side').onclick=e=>{const it=e.target.closest('.item');if(it)focus(+it.dataset.id)};
-function focus(id){const mm=mk[id];if(!mm)return;m.setView(mm.getLatLng(),Math.max(m.getZoom(),14));mm.openPopup()}
-$('leg2').innerHTML='<b>Генплан: функциональные зоны</b><br>'+GL.map(l=>`<i style="background:rgb(${l.rgb});border-radius:2px"></i>${l.name}`).join('<br>')+'<br><small>Привязка приблизительная (до ~300 м). Источник: карта функциональных зон генплана, сайт мэрии.</small>';
-$('leg').innerHTML=Object.entries(COL).map(([k,v])=>`<i style="background:${v}"></i>${k}`).join('<br>')+'<br><small>Размер - число замечаний. Красная рамка - отказ. Пунктир - точное место неизвестно (центр района).</small>';
-// таблица и цифры
-const COLS=[['plain','Что предлагают'],['district','Район'],['kind','Тип'],['end','Срок до'],['init','Инициатор'],['remarks','Замечания'],['rec','Итог']];
-let sk='end',sd=-1;$('th').innerHTML=COLS.map(c=>`<th data-k="${c[0]}">${c[1]}</th>`).join('');
-$('th').onclick=e=>{const k=e.target.dataset.k;if(!k)return;sd=sk===k?-sd:1;sk=k;render()};
-function bars(title,map){const e=Object.entries(map).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...e.map(x=>x[1]));
- return `<div class="chart"><h3>${title}</h3>`+e.map(([k,v])=>`<div class="bar"><span title="${esc(k)}">${esc(k)}</span><i style="width:${v/mx*160}px"></i><span>${v}</span></div>`).join('')+'</div>'}
-function cnt(list,f){const r={};list.forEach(d=>{const k=f(d);if(k!=null)r[k]=(r[k]||0)+1});return r}
-function table(list){const L2=[...list].sort((a,b)=>{const x=a[sk]??'',y=b[sk]??'';return (x>y?1:x<y?-1:0)*sd});
- $('tb').innerHTML=L2.map(d=>`<tr class="row" data-id="${d.id}"><td>${esc(d.plain)}</td><td>${esc(d.district||'-')}</td><td>${esc(d.kind)}</td><td>${fmt(d.end)}</td><td>${esc(d.init||'-')}</td><td>${remT(d)}</td><td>${recT(d)}</td></tr>`).join('')}
-$('tb').onclick=e=>{if(e.target.closest('a'))return;const tr=e.target.closest('tr.row');if(!tr)return;const nx=tr.nextElementSibling;
- if(nx&&nx.classList.contains('det')){nx.remove();return}const d=D.find(x=>x.id==tr.dataset.id);
- const r=document.createElement('tr');r.className='det';r.innerHTML=`<td colspan="7"><b>Официальное название:</b> ${esc(d.title)}<br>`+
- (change(d)?`<b>Было → станет:</b> ${esc(d.was||'не указано')} → ${esc(d.want||'-')}<br>`:'')+(d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)} ${esc(d.zone_name||'')}<br>`:'')+(d.gp?`<b>По генплану в этой точке:</b> ${esc(d.gp)} (приблизительно)<br>`:'')+(d.cad?`<b>Кадастровый номер:</b> ${esc(d.cad)}<br>`:'')+(d.area?`<b>Площадь:</b> ${d.area} м²<br>`:'')+
- `<b>Жители:</b> ${resT(d)}<br><b>Срок:</b> ${fmt(d.start)} - ${fmt(d.end)}<br>`+d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank">${esc(x.kind)}</a>`).join(' · ')+
- ` · <a href="${esc(d.url)}" target="_blank">Страница мэрии</a>`+(d.lat!=null?` · <button class="lnk" data-map="${d.id}">Показать на карте</button>`:'')+`</td>`;tr.after(r)};
-$('tb').addEventListener('click',e=>{const b=e.target.closest('[data-map]');if(b){show('map');focus(+b.dataset.map)}});
-function cards(list){const r=list.filter(d=>d.has_result),rm=r.reduce((s,d)=>s+d.remarks,0);
- $('cards').innerHTML=[[list.length,'слушаний'],[change0(list),'меняют вид использования'],[rm,'замечаний жителей'],[r.filter(d=>d.remarks>0).length+' из '+r.length,'с замечаниями'],[r.filter(d=>d.residents).length,'с участием жителей'],[list.filter(d=>d.rec==='отказ').length,'рекомендован отказ']].map(x=>`<div class="card"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('')}
-const change0=l=>l.filter(change).length;
-function charts(list){const byD=cnt(list,d=>d.district||'не указан'),chg=cnt(list.filter(change),d=>d.district||'не указан'),rem={};list.forEach(d=>{const k=d.district||'не указан';rem[k]=(rem[k]||0)+d.remarks});
- const wants=cnt(list.filter(d=>change(d)&&d.want),d=>d.want);
- $('charts').innerHTML=bars('Слушаний по районам',byD)+bars('Меняют вид использования, по районам',chg)+bars('Замечаний жителей, по районам',rem)+bars('Тип вопроса',cnt(list,d=>d.kind))+bars('Во что переводят участки (вид использования)',wants)+bars('Инициаторы (где указаны в материалах)',cnt(list,d=>d.init))}
-function render(){const l=flt();$('cnt').textContent=`Найдено: ${l.length} из ${D.length}`;drawMap(l);side(l);cards(l);charts(l);table(l);try{location.hash=new URLSearchParams(ids.map(i=>[i,$(i).type==='checkbox'?($(i).checked?'1':''):$(i).value]).filter(x=>x[1])).toString()}catch(e){}}
-ids.forEach(i=>$(i).addEventListener('input',render));
-$('rs').onclick=()=>{ids.forEach(i=>{if($(i).type==='checkbox')$(i).checked=false;else $(i).value=''});render()};
-$('csv').onclick=()=>{const l=flt(),h=['Что предлагают','Официальное название','Район','Тип','Начало','Конец','Инициатор','Замечаний','Итог','Было','Станет','Зона ПЗЗ','Кадастровый номер','Ссылка'];
- const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';const t='﻿'+[h.map(q).join(';')].concat(l.map(d=>[d.plain,d.title,d.district,d.kind,d.start,d.end,d.init,d.remarks,recT(d),d.was,d.want,d.zone,d.cad,d.url].map(q).join(';'))).join('\r\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='слушания-ярославль.csv';a.click()};
-function show(w){$('view-map').style.display=w==='map'?'flex':'none';$('view-tab').style.display=w==='map'?'none':'block';$('t1').classList.toggle('on',w==='map');$('t2').classList.toggle('on',w!=='map');if(w==='map')setTimeout(()=>m.invalidateSize(),50)}
-$('t1').onclick=()=>show('map');$('t2').onclick=()=>show('tab');
-try{new URLSearchParams(location.hash.slice(1)).forEach((v,k)=>{if($(k))($(k).type==='checkbox'?$(k).checked=!!v:$(k).value=v)})}catch(e){}
-render();
+ `<b>Район:</b> ${esc(d.district||'не указан')}<br><b>Срок:</b> ${fmt(d.start)} - ${fmt(d.end)}<br>`+(d.init?`<b>Инициатор:</b> ${esc(d.init)}<br>`:'')+
+ (d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)}${d.zone_name?' ('+esc(d.zone_name)+')':''}<br>`:'')+
+ (d.gpz?`<b>Затронутые зоны генплана:</b> ${d.gpz.map(z=>esc(z[0])+' '+z[1]+'%').join('; ')} <span class="lbl2">(приблизительно)</span><br>`:'')+
+ `<b>Жители:</b> ${resT(d)}; <b>замечания:</b> ${remT(d)}<br><b>Итог:</b> ${recT(d)}</p>`+(docs?`<div>${docs}</div>`:'')+`<div class="lbl2">Место: ${esc(d.how||'нет')}${d.shape&&d.shape[0]==='rect'&&!d.how.startsWith('адрес')?'. Рамка - охват территории по улицам':''}</div></div>`}
+function shapeOf(d){const rough=(d.how||'').startsWith('район')||(d.how||'').startsWith('середина'),bad=d.rec==='отказ',base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:rough?'5':null};
+ const s=d.shape;let o;
+ if(s&&s[0]==='rect'&&!d.how.startsWith('адрес'))o=L.rectangle([[s[1],s[2]],[s[3],s[4]]],{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3)});
+ else if(s&&s[0]==='circle')o=L.circle([d.lat,d.lon],{...base,radius:s[1],fillOpacity:.15});
+ else o=L.circleMarker([d.lat,d.lon],{...base,color:bad?'#c00':'#fff',weight:bad?3:1,radius:(d.how||'').startsWith('район')?9:7+Math.min(d.remarks,80)/6,fillOpacity:rough?.35:.85});
+ o.bindPopup(()=>pop(d),{maxWidth:310});if(d.label)o.bindTooltip(esc(d.label),{permanent:true,direction:'center',className:'lbl',opacity:1});return o}
+function drawMap(list){layer.clearLayers();mk={};list.filter(d=>d.lat!=null).forEach(d=>{const o=shapeOf(d);mk[d.id]=o;o.addTo(layer)})}
+function focusOn(id){const o=mk[id];if(!o)return;const d=D.find(x=>x.id===id);setPanel('pm');m.invalidateSize();
+ if(o.getBounds&&d.how&&!d.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:17});else m.setView(o.getLatLng(),Math.max(m.getZoom(),16));o.openPopup()}
+function zoomDistrict(){outline.clearLayers();const n=F.district;
+ if(n&&DIST.box[n]){m.fitBounds(DIST.box[n],{padding:[10,10]});L.polygon(DIST.out[n],{color:'#635bff',weight:2,fill:false,dashArray:'6',interactive:false}).addTo(outline)}else m.fitBounds(CITY)}
+// клик по зоне генплана
+function zoneAt(ll){const w=GRID.w,h=GRID.h,x=Math.floor((ll.lng-A[1])/(A[3]-A[1])*w),y=Math.floor((A[0]-ll.lat)/(A[0]-A[2])*h);
+ if(x<0||y<0||x>=w||y>=h)return -1;if(!GRID.flat){GRID.flat=new Uint8Array(w*h);let p=0;for(let i=0;i<GRID.rle.length;i+=2){GRID.flat.fill(GRID.rle[i],p,p+GRID.rle[i+1]);p+=GRID.rle[i+1]}}
+ for(let r=0;r<=3;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=w||yy>=h)continue;const v=GRID.flat[yy*w+xx];if(v<17)return v}return -1}
+m.on('click',e=>{if(!$('fg').checked)return;const i=zoneAt(e.latlng);if(i<0)return;const z=GL[i];
+ L.popup({maxWidth:320}).setLatLng(e.latlng).setContent(`<div class="pop"><h4><i style="display:inline-block;width:11px;height:11px;border-radius:2px;background:rgb(${z.rgb});margin-right:5px"></i>${esc(z.name)}</h4>`+
+ `<p><b>Характер освоения:</b> ${esc(z.character)}<br><b>Площадь зоны в городе:</b> ${esc(z.area_ha)} га (${esc(z.pct)}% города)</p><p><b>Назначение:</b> ${esc(z.desc)}</p>`+(z.uses?`<p><b>Основные виды использования:</b> ${esc(z.uses)}</p>`:'')+(z.density?`<p><b>Плотность и этажность:</b> ${esc(z.density)}</p>`:'<p class="lbl2">Плотность застройки для этой зоны в Положении генплана не указана.</p>')+`<div class="lbl2">Генплан Ярославля, ред. приказа от 03.09.2026 № 36. Граница зоны на карте приблизительна (до ~300 м).</div></div>`).openOn(m)});
+$('fg').onchange=()=>{$('fg').checked?gpl.addTo(m):m.removeLayer(gpl);$('leg2').style.display=$('fg').checked?'block':'none'};
+$('fgo').oninput=()=>gpl.setOpacity($('fgo').value/100);
+const z15=()=>$('m').classList.toggle('z15',m.getZoom()>=15);m.on('zoomend',z15);z15();
+$('leg').innerHTML=Object.entries(COL).map(([k,v])=>`<i style="background:${v}"></i>${k}`).join('<br>')+'<br><small>Рамка/контур - затронутая территория. Красная - отказ. Пунктир - место неточное.</small>';
+function legend2(){$('leg2').innerHTML='<b>Генплан: зоны</b> <small>(клик - фильтр)</small>'+GL.map(l=>`<span class="leg2i${F.gp===l.name?' sel':''}" data-gp="${esc(l.name)}"><i style="background:rgb(${l.rgb})"></i>${esc(l.name)}</span>`).join('')+'<small>Источник: карта функциональных зон генплана, сайт мэрии. Привязка приблизительная.</small>'}
+$('leg2').onclick=e=>{const s=e.target.closest('[data-gp]');if(s)tog('gp',s.dataset.gp)};
+// ---------- цифры
+function kpis(list){const r=list.filter(d=>d.has_result),rm=r.reduce((s,d)=>s+d.remarks,0);
+ $('kpis').innerHTML=[[list.length,'слушаний'],[list.filter(change).length,'меняют вид'],[rm,'замечаний'],[r.filter(d=>d.remarks>0).length+'/'+r.length,'с замечаниями'],[r.filter(d=>d.residents).length,'жители участв.'],[list.filter(d=>d.rec==='отказ').length,'отказов']].map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('')}
+const expanded={};
+function charts(){$('charts').innerHTML=DIMS.map(x=>{const c={};flt(x.k).forEach(d=>{const v=x.get(d);if(v!=null)c[v]=(c[v]||0)+1});
+ let e=Object.entries(c);e.sort(x.sortKey?(a,b)=>b[0].localeCompare(a[0]):(a,b)=>b[1]-a[1]);
+ if(F[x.k]&&!c[F[x.k]])e.unshift([F[x.k],0]);const mx=Math.max(1,...e.map(a=>a[1])),shown=expanded[x.k]?e:e.slice(0,x.top);
+ if(F[x.k]&&!shown.some(a=>a[0]===F[x.k])){const s=e.find(a=>a[0]===F[x.k]);if(s)shown.push(s)}
+ return `<div class="chart ${F[x.k]?'has-sel':''}"><h3>${x.t}</h3>`+(e.length?shown.map(([k,v])=>`<div class="bar2${F[x.k]===k?' sel':''}${k==='не указан'?' muted':''}" data-d="${x.k}" data-v="${esc(k)}"><span class="nm">${esc(k)}</span><span><i style="width:${Math.max(2,v/mx*100)}%"></i></span><span class="n">${v}</span></div>`).join('')+(e.length>x.top?`<div class="more" data-more="${x.k}">${expanded[x.k]?'свернуть':'ещё '+(e.length-shown.length)}</div>`:''):'<div class="lbl2" style="color:var(--mut)">нет данных в выбранном срезе</div>')+'</div>'}).join('')}
+$('charts').onclick=e=>{const b=e.target.closest('[data-d]');if(b){tog(b.dataset.d,b.dataset.v);return}const mo=e.target.closest('[data-more]');if(mo){expanded[mo.dataset.more]=!expanded[mo.dataset.more];charts()}};
+// ---------- список
+let open=null;
+function list(l){const k=$('so').value;const L2=[...l].sort((a,b)=>k==='remarks'?b.remarks-a.remarks:(b.end||'').localeCompare(a.end||''));$('lc').textContent=`Слушания: ${l.length}`;
+ $('list').innerHTML=L2.map(d=>`<div class="it${open===d.id?' open':''}" data-id="${d.id}"><div class="t">${esc(d.plain)}</div><div class="mt">${esc(d.district||'район не указан')} · до ${fmt(d.end)}</div>`+
+ `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замеч.</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.lat==null?'<span class="chip">нет на карте</span>':'')+
+ (open===d.id?`<div class="dt"><b>Официальное название:</b> ${esc(d.title)}<br>`+(d.init?`<b>Инициатор:</b> <a href="#" data-d="init" data-v="${esc(d.init)}">${esc(d.init)}</a><br>`:'')+(change(d)?`<b>Было → станет:</b> ${esc(d.was||'не указано')} → ${esc(d.want||'-')}<br>`:'')+(d.zone?`<b>Зона ПЗЗ:</b> ${esc(d.zone)} ${esc(d.zone_name||'')}<br>`:'')+(d.gpz?`<b>Зоны генплана:</b> ${d.gpz.map(z=>esc(z[0])+' '+z[1]+'%').join('; ')}<br>`:'')+(d.cad?`<b>Кадастровый номер:</b> ${esc(d.cad)}<br>`:'')+(d.area?`<b>Площадь:</b> ${d.area} м²<br>`:'')+`<b>Жители:</b> ${resT(d)}; <b>итог:</b> ${recT(d)}<br>`+d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.kind)}</a>`).join(' · ')+` · <a href="${esc(d.url)}" target="_blank" rel="noopener">Страница мэрии</a>`+(d.lat!=null?` · <button class="lnk" data-map="${d.id}">Показать на карте</button>`:'')+`</div>`:'')+`</div>`).join('')||'<p style="padding:12px;color:var(--mut)">Ничего не найдено</p>'}
+$('list').onclick=e=>{const a=e.target.closest('[data-d]');if(a){e.preventDefault();tog(a.dataset.d,a.dataset.v);return}const b=e.target.closest('[data-map]');if(b){focusOn(+b.dataset.map);return}if(e.target.closest('a'))return;const it=e.target.closest('.it');if(!it)return;const id=+it.dataset.id;open=open===id?null:id;list(flt())};
+$('so').onchange=()=>list(flt());
+// ---------- состояние
+function tog(k,v){F[k]=F[k]===v?'':v;sync();if(k==='district')zoomDistrict()}
+function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',F.win==='now'?'Идут сейчас':'За 90 дней']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);
+ $('chips').innerHTML=c.map(([k,t])=>`<span class="fc" data-x="${k}"><span title="${esc(t)}">${esc(t)}</span><b>×</b></span>`).join('')}
+$('chips').onclick=e=>{const c=e.target.closest('[data-x]');if(!c)return;const k=c.dataset.x;F[k]=(typeof F[k]==='number')?0:'';sync();if(k==='district')zoomDistrict()};
+function ctrls(){$('fd').value=F.district;$('fk').value=F.kind;$('fy').value=F.year;$('fw').value=F.win;$('fq').value=F.q;$('fr').checked=!!F.rem;$('fo').checked=!!F.rej;$('fu').checked=!!F.chg}
+function sync(){ctrls();const l=flt();$('cnt').textContent=`Найдено: ${l.length} из ${D.length}`;chips();kpis(l);charts();list(l);drawMap(l);legend2()}
+const uniq=a=>[...new Set(a)].filter(Boolean).sort();
+uniq(D.map(d=>d.district)).forEach(v=>$('fd').add(new Option(v,v)));uniq(D.map(d=>d.kind)).forEach(v=>$('fk').add(new Option(v,v)));uniq(D.map(d=>(d.start||'').slice(0,4))).reverse().forEach(v=>$('fy').add(new Option(v,v)));
+$('fd').onchange=()=>{F.district=$('fd').value;sync();zoomDistrict()};$('fk').onchange=()=>{F.kind=$('fk').value;sync()};$('fy').onchange=()=>{F.year=$('fy').value;sync()};$('fw').onchange=()=>{F.win=$('fw').value;sync()};
+$('fq').oninput=()=>{F.q=$('fq').value;sync()};$('fr').onchange=()=>{F.rem=$('fr').checked?1:0;sync()};$('fo').onchange=()=>{F.rej=$('fo').checked?1:0;sync()};$('fu').onchange=()=>{F.chg=$('fu').checked?1:0;sync()};
+$('ft').onclick=()=>$('bar').classList.toggle('open');
+$('rs').onclick=()=>{Object.keys(F).forEach(k=>F[k]=typeof F[k]==='number'?0:'');open=null;sync();zoomDistrict()};
+$('csv').onclick=()=>{const l=flt(),h=['Что предлагают','Официальное название','Район','Тип','Начало','Конец','Инициатор','Замечаний','Итог','Было','Станет','Зона ПЗЗ','Зона генплана','Кадастровый номер','Ссылка'],q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const t='﻿'+[h.map(q).join(';')].concat(l.map(d=>[d.plain,d.title,d.district,d.kind,d.start,d.end,d.init,d.remarks,recT(d),d.was,d.want,d.zone,d.gp,d.cad,d.url].map(q).join(';'))).join('\r\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='слушания-ярославль.csv';a.click()};
+function setPanel(id){document.querySelectorAll('#mtabs button').forEach(b=>b.classList.toggle('on',b.dataset.p===id));['pc','pm','pl'].forEach(p=>$(p).classList.toggle('on',p===id));setTimeout(()=>m.invalidateSize(),30)}
+$('mtabs').onclick=e=>{const b=e.target.closest('button');if(b)setPanel(b.dataset.p)};
+function desk(){if(innerWidth>940)['pc','pm','pl'].forEach(p=>$(p).classList.remove('on'));else if(!['pc','pm','pl'].some(p=>$(p).classList.contains('on')))setPanel('pm');setTimeout(()=>m.invalidateSize(),30)}
+addEventListener('resize',desk);desk();sync();
 </script></body></html>
