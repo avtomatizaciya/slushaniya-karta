@@ -218,4 +218,5 @@ function setPanel(id){document.querySelectorAll('#mtabs button').forEach(b=>b.cl
 $('mtabs').onclick=e=>{const b=e.target.closest('button');if(b)setPanel(b.dataset.p)};
 function desk(){if(innerWidth>940)['pc','pm','pl'].forEach(p=>$(p).classList.remove('on'));else if(!['pc','pm','pl'].some(p=>$(p).classList.contains('on')))setPanel('pm');setTimeout(()=>m.invalidateSize(),30)}
 addEventListener('resize',desk);desk();sync();
+try{const q=+new URLSearchParams(location.search).get('id');if(q&&D.some(d=>d.id===q)){openCard(q,true);setTimeout(()=>{m.invalidateSize();if(innerWidth>940)focusOn(q)},150)}}catch(e){}
 </script></body></html>
