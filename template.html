@@ -76,20 +76,57 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
 #ctl tr.r{cursor:pointer}#ctl tr.r:hover,#ctl tr.sel{background:var(--a2)}.mb{display:inline-block;height:8px;background:var(--a);border-radius:3px;vertical-align:middle;margin-left:4px;min-width:1px}.tw{overflow-x:auto}
 .lbl2l{margin:4px 0;padding-left:18px;font-size:12px}.lbl2l a{color:#4a42d6}
 .cd details{margin:8px 0}.cd summary{cursor:pointer;color:#4a42d6}.moreb{border:0;background:none;color:#4a42d6;cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+#bar{gap:8px}#fq{width:clamp(180px,24vw,360px)}#ft{display:inline-flex;align-items:center;justify-content:center}
+#cnt{margin-left:auto;color:var(--mut)}.chips:empty{display:none}.fc{border:0;font:inherit}.fc:focus-visible{outline:2px solid var(--a)}
+#main.no-stats{grid-template-columns:minmax(0,1fr) clamp(310px,32vw,485px)}#main.no-stats #pc{display:none}
+#filterDialog{color:var(--ink);padding:0;border:1px solid var(--line);border-radius:16px;width:min(510px,96vw);max-height:88dvh;box-shadow:0 8px 40px #152f4933}
+#filterDialog[open]{display:flex;flex-direction:column}#filterDialog::backdrop{background:#102e4666}
+.filter-head,.filter-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px}
+.filter-head{border-bottom:1px solid var(--line)}.filter-head h2{margin:0;font-size:17px}.filter-foot{border-top:1px solid var(--line)}
+.filter-body{min-height:0;overflow:auto;padding:10px 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
+.filter-body select{max-width:100%;width:100%;border:1px solid var(--line);border-radius:8px;background:white;color:inherit;padding:8px;font:inherit}
+#fk,.filter-body .cb,.layer-settings{grid-column:1/-1}.filter-body .cb{gap:8px}.layer-settings{display:flex;align-items:center;gap:12px}.layer-settings label{display:flex;align-items:center;gap:5px}
+#filterDialog button,#filterDialog select,#filterDialog label,#filterDialog a{min-height:42px}
+#filterDialog .lnk{text-align:left}.filter-body .lnk{display:flex;align-items:center}#rs{white-space:nowrap}
+#now .lnk{min-height:24px}#filterDialog:not([open]){display:none}.map-tools{display:none}.outcome{padding:10px 12px;border-left:3px solid #30796b;background:#f1f8f6;border-radius:6px}.outcome h3{margin-top:0;color:#224b44}.outcome p{margin:5px 0}.outcome a{color:#174a80}
+@media(max-width:940px){
+ #bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 8px;padding:6px 8px}
+ #fq{width:100%;grid-column:1;grid-row:1}#ft{grid-column:2;grid-row:1}#fd{grid-column:1;grid-row:2;width:100%}#cnt{grid-column:2;grid-row:2;margin:0;font-size:11px}#statsToggle{display:none}
+ .chips{grid-column:1/-1;flex-wrap:nowrap;overflow:auto}.fc{flex:none;max-width:180px}
+ #main.no-stats{grid-template-columns:1fr}#main.no-stats #pc.on{display:block}
+ .map-tools{display:flex;position:absolute;z-index:750;right:6px;top:6px;gap:4px}.map-tool{min-height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink);font:inherit;box-shadow:0 1px 4px #0002}
+ #pm:not(.show-legend) #leg,#pm:not(.show-opinions) #strip,#pm:not(.show-opinions) .opa{display:none}
+ #leg{bottom:18px;max-height:72%;overflow:auto}#strip,#leg2{top:50px}#pm.show-opinions #leg2{top:108px}
+ #card .lh button,#listv .lh button,#card .b{min-height:40px}.lh{flex-wrap:wrap}
+ #list .it .t{display:block;overflow:visible}#lc{white-space:nowrap}
+ #listv .lh{column-gap:4px}#listv .lh select{max-width:33%}
+ .filter-foot button{font-size:13px}
+}
 </style></head><body>
 <header role="banner"><h1>Слушания Ярославля</h1><small>Публичные обсуждения мэрии, 2009-2026</small><a class="mkd" href="https://yar.city/maps/neighbors/" target="_blank" rel="noopener" title="Карта сообществ соседей по домам (сайт yar.city)">Карта домов МКД<small>сообщества соседей по домам</small></a><a class="bot" href="https://t.me/slushaniya_yaroslavl_bot" target="_blank" rel="noopener">Подписаться в боте</a></header>
 <div id="now" role="status"></div>
-<div class="bar" id="bar" role="search" aria-label="Фильтры"><button class="rst" id="ft">Фильтры</button><span id="more"><select id="fd" aria-label="Район"><option value="">Все районы</option></select>
-<select id="fk" aria-label="Тип вопроса"><option value="">Все типы вопросов</option></select>
+<div class="bar" id="bar" role="search" aria-label="Поиск и фильтры">
+ <input id="fq" type="search" placeholder="Улица или адрес" aria-label="Поиск по улице, адресу или слову">
+ <select id="fd" aria-label="Район"><option value="">Все районы</option></select>
+ <button class="rst" id="ft" aria-haspopup="dialog">Фильтры</button>
+ <button class="lnk" id="statsToggle" aria-controls="pc" aria-expanded="true">Скрыть цифры</button>
+ <span id="cnt" role="status"></span>
+ <span class="chips" id="chips"></span>
+</div>
+<dialog id="filterDialog" aria-labelledby="filterTitle">
+ <div class="filter-head"><h2 id="filterTitle">Фильтры карты</h2><button class="lnk" id="filterClose">Закрыть</button></div>
+ <div class="filter-body"><select id="fk" aria-label="Тип вопроса"><option value="">Все типы вопросов</option></select>
 <select id="fy" aria-label="Год"><option value="">Все годы</option></select>
 <select id="fw" aria-label="Срок приёма замечаний"><option value="">Любой срок</option><option value="now">Идут сейчас</option><option value="7">За 7 дней</option><option value="30">За 30 дней</option><option value="90">За 90 дней</option><option value="year">Этот год</option></select>
-<input id="fq" type="search" placeholder="Улица, адрес, слово..." size="16" aria-label="Поиск по улице, адресу или слову">
-<label class="cb" title="Слушания, где были замечания жителей"><input type="checkbox" id="fr"> <span>Были замечания жителей</span></label><label class="cb" title="Организатор рекомендовал отказать"><input type="checkbox" id="fo"> <span>Рекомендован отказ</span></label><label class="cb" title="Меняют вид разрешённого использования участка"><input type="checkbox" id="fu"> <span>Меняют вид использования</span></label><label class="cb" title="Слушания, о которых есть публичные посты градозащитников"><input type="checkbox" id="fm"> <span>Только слушания с мнениями градозащитников</span></label><button class="lnk" id="ctlb">Контроль</button><button class="lnk" id="opnb">Мнения</button><button class="lnk" id="cdcb">Городские документы</button><button class="lnk" id="csv">CSV</button><a class="lnk" id="fbk" href="https://t.me/slushaniya_yaroslavl_bot?start=fb_map" target="_blank" rel="noopener">Сообщить об ошибке</a></span><label title="Карта функциональных зон генплана; клик по зоне - описание"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:60px" aria-label="Прозрачность слоя генплана">
-<button class="rst" id="rs">Сбросить всё</button><span class="chips" id="chips"></span><span id="cnt" style="margin-left:auto;color:var(--mut)"></span></div>
+<label class="cb" title="Слушания, где были замечания жителей"><input type="checkbox" id="fr"> <span>Были замечания жителей</span></label><label class="cb" title="Организатор рекомендовал отказать"><input type="checkbox" id="fo"> <span>Рекомендован отказ</span></label><label class="cb" title="Меняют вид разрешённого использования участка"><input type="checkbox" id="fu"> <span>Меняют вид использования</span></label><label class="cb" title="Слушания, о которых есть публичные посты градозащитников"><input type="checkbox" id="fm"> <span>Только слушания с мнениями градозащитников</span></label><button class="lnk" id="ctlb">Контроль</button><button class="lnk" id="opnb">Мнения</button><button class="lnk" id="cdcb">Городские документы</button><button class="lnk" id="csv">CSV</button><a class="lnk" id="fbk" href="https://t.me/slushaniya_yaroslavl_bot?start=fb_map" target="_blank" rel="noopener">Сообщить об ошибке</a>
+ <div class="layer-settings"><label title="Карта функциональных зон генплана; клик по зоне - описание"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:60px" aria-label="Прозрачность слоя генплана">
+</div></div>
+ <div class="filter-foot"><button class="lnk" id="rs">Сбросить всё</button><button class="b blue" id="applyFilters">Показать результаты</button></div>
+</dialog>
 <main id="main">
 <section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"></div><div id="charts"></div></section>
-<section class="panel on" id="pm"><div id="m"></div><div id="strip" role="group" aria-label="Мнения авторов" title="Публичные посты авторов ВКонтакте. Мнения принадлежат авторам, не позиция проекта."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
-<section class="panel" id="pl" tabindex="0" aria-label="Список слушаний и карточка"><div id="listv"><div class="lh"><b id="lc"></b><select id="so" aria-label="Сортировка списка"><option value="end">по дате</option><option value="remarks">по замечаниям</option></select></div><div id="list"></div></div><div id="card" style="display:none"></div></section>
+<section class="panel on" id="pm"><div id="m"></div><div class="map-tools"><button class="map-tool" id="legendToggle" aria-controls="leg" aria-expanded="false">Условные знаки</button><button class="map-tool" id="opinionsToggle" aria-controls="strip" aria-expanded="false">Мнения</button></div><div id="strip" role="group" aria-label="Мнения авторов" title="Публичные посты авторов ВКонтакте. Мнения принадлежат авторам, не позиция проекта."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
+<section class="panel" id="pl" tabindex="0" aria-label="Список слушаний и карточка"><div id="listv"><div class="lh"><b id="lc"></b><button class="lnk" id="shareList">Поделиться подборкой</button><select id="so" aria-label="Сортировка списка"><option value="end">по дате</option><option value="remarks">по замечаниям</option></select></div><div id="list"></div></div><div id="card" style="display:none"></div></section>
 </main>
 <div id="cdc" class="ovl" role="dialog" aria-label="Городские документы" style="display:none"></div>
 <div id="opn" class="ovl" role="dialog" aria-label="Мнения" style="display:none"></div>
@@ -156,8 +193,10 @@ function opIcons(d){const by={};(X.posts||[]).filter(o=>(o.h||[]).includes(d.id)
   b.on('add',()=>{const e=b.getElement();if(e){e.setAttribute('role','button');e.dataset.h=d.id;e.classList.toggle('sel',d.id===openId);e.setAttribute('aria-label','Мнение: '+a+', '+(l[0].d||''))}});b.addTo(layer)})}
 function drawMap(list){layer.clearLayers();mk={};list.filter(d=>d.lat!=null).forEach(d=>{const o=shapeOf(d);mk[d.id]=o;o.addTo(layer);if(OPS.has(d.id)&&SHOWOP)opIcons(d)})}
 function focusOn(id){touched=true;const o=mk[id];if(!o)return;const d=D.find(x=>x.id===id);setPanel('pm');m.invalidateSize();
- if(o.getBounds&&d.how&&!d.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:17});else m.setView(o.getLatLng(),Math.max(m.getZoom(),16))}
+ if(o.getBounds&&d.how&&!d.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:17});else m.setView([d.lat,d.lon],Math.max(m.getZoom(),16))}
+let pendingDistrict=false;
 function zoomDistrict(){touched=true;outline.clearLayers();const n=F.district;
+ if(!$('pm').clientWidth){pendingDistrict=true;return} pendingDistrict=false;
  if(n&&DIST.box[n]){m.fitBounds(DIST.box[n],{padding:[10,10]});L.polygon(DIST.out[n],{color:'#635bff',weight:2,fill:false,dashArray:'6',interactive:false}).addTo(outline)}else m.fitBounds(CITY)}
 // клик по зоне генплана
 function zoneAt(ll){const w=GRID.w,h=GRID.h,x=Math.floor((ll.lng-A[1])/(A[3]-A[1])*w),y=Math.floor((A[0]-ll.lat)/(A[0]-A[2])*h);
@@ -166,7 +205,8 @@ function zoneAt(ll){const w=GRID.w,h=GRID.h,x=Math.floor((ll.lng-A[1])/(A[3]-A[1
 m.on('click',e=>{if(!$('fg').checked)return;const i=zoneAt(e.latlng);if(i<0)return;const z=GL[i];
  L.popup({maxWidth:320}).setLatLng(e.latlng).setContent(`<div class="pop"><h4><i style="display:inline-block;width:11px;height:11px;border-radius:2px;background:rgb(${z.rgb});margin-right:5px"></i>${esc(z.name)}</h4>`+
  `<p><b>Характер освоения:</b> ${esc(z.character)}<br><b>Площадь зоны в городе:</b> ${esc(z.area_ha)} га (${esc(z.pct)}% города)</p><p><b>Назначение:</b> ${esc(z.desc)}</p>`+(z.uses?`<p><b>Основные виды использования:</b> ${esc(z.uses)}</p>`:'')+(z.density?`<p><b>Плотность и этажность:</b> ${esc(z.density)}</p>`:'<p class="lbl2">Плотность застройки для этой зоны в Положении генплана не указана.</p>')+`<div class="lbl2">Генплан Ярославля, ред. приказа от 03.09.2026 № 36. Граница зоны на карте приблизительна (до ~300 м).</div></div>`).openOn(m)});
-$('fg').onchange=()=>{$('fg').checked?gpl.addTo(m):m.removeLayer(gpl);$('leg2').style.display=$('fg').checked?'block':'none'};
+$('fgo').hidden=!$('fg').checked;
+$('fg').onchange=()=>{$('fgo').hidden=!$('fg').checked;$('fg').checked?gpl.addTo(m):m.removeLayer(gpl);$('leg2').style.display=$('fg').checked?'block':'none'};
 $('fgo').oninput=()=>gpl.setOpacity($('fgo').value/100);
 const z15=()=>$('m').classList.toggle('z15',m.getZoom()>=15);m.on('zoomend',z15);z15();
 $('leg').innerHTML=Object.entries(COL).map(([k,v])=>`<i style="background:${v}"></i>${k}`).join('<br>')+'<br><small>Рамка/контур - затронутая территория. Красная - отказ. Пунктир - место неточное.</small>';
@@ -187,7 +227,7 @@ $('charts').onclick=e=>{const b=e.target.closest('[data-d]');if(b){tog(b.dataset
 // ---------- список и карточка
 let openId=null;
 function renderRight(){if(openId!=null){$('listv').style.display='none';$('card').style.display='block';card(D.find(x=>x.id===openId))}else{$('card').style.display='none';$('listv').style.display='block';list(flt())}}
-function list(l){const k=$('so').value;const L2=[...l].sort((a,b)=>k==='remarks'?b.remarks-a.remarks:(b.end||'').localeCompare(a.end||''));$('lc').textContent=`Слушания: ${l.length}`;
+function list(l){const k=$('so').value;const L2=[...l].sort((a,b)=>k==='remarks'?b.remarks-a.remarks:(b.end||'').localeCompare(a.end||''));$('lc').textContent=`Записей: ${l.length}`;
  $('list').innerHTML=L2.map(d=>`<div class="it" data-id="${d.id}" tabindex="0" role="button"><div class="t">${esc(d.plain)}</div><div class="mt">${esc(d.district||'район не указан')} · ${stat(d).short}</div>`+
  `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замеч.</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.arch&&d.citywide?'<span class="chip">касается всего города</span>':d.lat==null?'<span class="chip">нет на карте</span>':'')+opB(d.id)+`</div>`).join('')||'<p style="padding:12px;color:var(--mut)">Ничего не найдено</p>'}
 const dleft=d=>Math.round((Date.parse(d.end)-Date.parse(todayS))/864e5);
@@ -195,8 +235,8 @@ function stat(d){if(d.arch)return{short:'постановление от '+fmt(d
  if(n<0)return{short:'завершено '+fmt(d.end),long:`Приём замечаний завершён ${fmt(d.end)}.`,open:false};
  if(n===0)return{short:'последний день',long:`Сегодня последний день приёма замечаний (${fmt(d.end)}).`,open:true};
  return{short:`до ${fmt(d.end)} (${n} дн.)`,long:`Приём замечаний до ${fmt(d.end)}, осталось ${n} дн.`,open:true}}
-function openCard(id,fromMap){openId=id;document.querySelectorAll('.opa').forEach(e=>e.classList.toggle('sel',+e.dataset.h===id));renderRight();if(innerWidth<=940&&fromMap)setPanel('pl');$('pl').scrollTop=0}
-function closeCard(){openId=null;renderRight()}
+function openCard(id,fromMap){openId=id;writeLocation();document.querySelectorAll('.opa').forEach(e=>e.classList.toggle('sel',+e.dataset.h===id));renderRight();if(innerWidth<=940&&fromMap)setPanel('pl');$('pl').scrollTop=0}
+function closeCard(){openId=null;writeLocation();renderRight()}
 $('list').onclick=e=>{const it=e.target.closest('.it');if(!it)return;const id=+it.dataset.id;openCard(id);const d=D.find(x=>x.id===id);if(d.lat!=null&&innerWidth>940)focusOn(id)};
 $('so').onchange=()=>list(flt());
 function ics(d){const z=s=>s.replace(/-/g,''),nx=new Date(Date.parse(d.end)+864e5).toISOString().slice(0,10).replace(/-/g,'');
@@ -207,14 +247,14 @@ function dl(name,text,type){const a=document.createElement('a');a.href=URL.creat
 function more(txt){const sh=txt.length>260?txt.slice(0,260).replace(/\s+\S*$/,'')+'…':txt;return txt.length>260?`<span data-short="${esc(sh)}" data-full="${esc(txt)}">${esc(sh)}</span> <button class="moreb">Читать далее</button>`:esc(txt)}
 function copy(txt,btn){const done=()=>{const o=btn.textContent;btn.textContent='Скопировано';setTimeout(()=>btn.textContent=o,1500)};
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,()=>fb());else fb();
- function fb(){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}ta.remove()}}
+ function fb(){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();let copied=false;try{copied=document.execCommand('copy')}catch{}ta.remove();if(copied)done();else window.prompt('Скопируйте текст',txt)}}
 const POS={'за':'Поддерживаю','против':'Не согласен','вопрос':'Вопрос'};
 function templ(d){const w=d.addr||d.plain,ttl=`«${d.plain}»`+(d.addr&&!d.plain.includes(d.addr)?` (${d.addr})`:''),sign='\n\nЧтобы замечание учли, укажите ФИО, дату рождения и адрес проживания: [заполните].';
  return[['Поддерживаю',`Прошу учесть моё мнение по вопросу ${ttl}. Я поддерживаю предлагаемое решение.\nПочему это важно для меня: [напишите своими словами].`+sign],
  ['Не согласен',`Не согласен с предлагаемым решением по вопросу ${ttl} и прошу его не утверждать в предложенном виде.\nПричины: [например: нагрузка на двор и проезд, этажность, зелёная зона - укажите свои].`+sign],
  ['Прошу учесть / разъяснить',`Прошу учесть и разъяснить по вопросу ${ttl}:\n1) [ваш вопрос или условие];\n2) [ваш вопрос или условие].\nПрошу направить ответ в установленном порядке.`+sign]]}
 function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>');
- $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
+ $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
  <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.sec)}</span><span class="chip">постановление от ${fmt(d.start)}</span>${d.citywide?'<span class="chip">касается всего города</span>':'<span class="chip">место приблизительно</span>'}${opB(d.id)}</div>
  <p class="big">Постановление о назначении слушаний от ${fmt(d.start)}.</p><p class="lbl2">Это дата постановления, а не дата самих слушаний: дату проведения смотрите в постановлении и регламенте.</p>
  <h3>Что это</h3><p>${esc(d.expl)}</p>
@@ -224,49 +264,112 @@ function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_bl
  <p><a class="lnk" href="${esc(d.url)}" target="_blank" rel="noopener">Страница раздела на портале мэрии</a></p>
  <details><summary>Официальное название</summary><p>${esc(d.title)}</p></details><p><a class="lnk" href="${BOT}?start=fb_${d.id}" target="_blank" rel="noopener">Нашли ошибку? Сообщить по записи №${d.id}</a></p></div>`;
  $('cb').onclick=closeCard;const cm=$('cm');if(cm)cm.onclick=()=>focusOn(d.id)}
+function outcome(d) {
+ const report=d.docs.find(doc=>/^заключение/i.test(doc.name));
+ const status=d.has_result ? `Жители: ${resT(d)}. Замечания: ${remT(d)}. ${esc(recT(d))}.` : report ? 'Заключение доступно в документах.' : 'Заключение пока не найдено.';
+ return `<div class="outcome"><h3>Итог обсуждения</h3><p>${status}</p>
+ ${d.has_result ? '<p class="lbl2">Автоматический разбор заключения организатора. Окончательное решение проверяйте по отдельному акту мэрии.</p>' : ''}
+ <a href="${esc(report ? report.url : d.url)}" target="_blank" rel="noopener">${report ? 'Открыть заключение' : 'Открыть дело на портале мэрии'}</a></div>`;
+}
 function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]||X.kinds.other,docs=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>'),ops=X.opinions.filter(o=>o.event_id===d.id);
  const when=d.meet?`<b>Встреча:</b> ${esc(d.meet)}<br>`:'',expo=d.expo?`<b>Экспозиция (из протокола):</b> ${esc(d.expo)}<br>`:'';
  const facts=[['Что меняют',change(d)?`${d.was?'сейчас: '+esc(d.was)+'; ':''}хотят: «${esc(d.want||'-')}»`:null],['Суть проекта (из документов)',d.purpose?more(d.purpose):null],['Адрес / участок',d.addr?esc(d.addr):null],['Кадастровый номер',d.cad?esc(d.cad):null],['Площадь',d.area?d.area+' м²':null],['Зона ПЗЗ',d.zone?esc(d.zone)+(d.zone_name?' ('+esc(d.zone_name)+')':''):null],['Зоны генплана на этой территории',d.gpz?d.gpz.map(z=>esc(z[0])+' '+z[1]+'%').join('; ')+' <span class="lbl2">(приблизительно)</span>':null]].filter(f=>f[1]);
  const T=templ(d);
- $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
- <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip ${st.open?'ok':''}">${st.open?'идёт приём замечаний':'завершено'}</span>${d.rec==='отказ'?'<span class="chip bad">рекомендован отказ</span>':''}</div>
+ $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
+ <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip ${st.open?'ok':''}">${st.open?'идёт приём замечаний':d.end?'завершено':'срок не указан'}</span>${d.rec==='отказ'?'<span class="chip bad">рекомендован отказ</span>':''}</div>
  <p class="big ${st.open?'ok2':''}">${esc(st.long)}</p>
- <p>${when}${expo}${when||expo?'':'<span class="lbl2">Дата, время и место проведения в материалах не указаны (формат - общественные обсуждения: замечания принимаются письменно и онлайн).</span>'}</p>
- <div class="btns">${st.open?'<button class="b" id="bc">Добавить в календарь</button>':''}<a class="b blue" href="${BOT}?start=ev_${d.id}" target="_blank" rel="noopener">Следить за этим слушанием</a><a class="b" href="#" id="bs">Подать замечание</a></div>
- <div id="how" style="display:none" class="box">${esc(X.tail)}<br><a href="https://www.gosuslugi.ru/" target="_blank" rel="noopener">Госуслуги</a> (виджет «Мой выбор, Моё будущее») · <a href="${esc(d.url)}" target="_blank" rel="noopener">Страница слушания на портале мэрии</a></div>
+ ${!st.open && (d.end || d.has_result) ? outcome(d) : ''}
+ ${st.open ? `<p>${when}${expo}</p><div class="btns"><button class="b blue" id="bs" aria-expanded="false" aria-controls="how">Как подать замечание</button><button class="b" id="bc">Добавить в календарь</button></div>
+ <div id="how" hidden class="box"><a href="${esc(d.url)}" target="_blank" rel="noopener">Открыть объявление мэрии и проверить порядок подачи</a><p>${esc(X.tail)}</p><a href="https://www.gosuslugi.ru/" target="_blank" rel="noopener">Госуслуги</a></div>` : (!d.end ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">Уточнить срок на портале мэрии</a></p>` : '')}
+ <p><a href="${BOT}?start=ev_${d.id}" target="_blank" rel="noopener">Следить за этим слушанием</a></p>
  <h3>Что предлагают</h3><p>${esc(d.expl)}</p>${facts.length?'<table class="ft">'+facts.map(f=>`<tr><td>${f[0]}</td><td>${f[1]}</td></tr>`).join('')+'</table>':''}
  <p class="lbl2">Место на карте: ${esc(d.how||'не определено')}${d.approx?'. Границы приблизительные.':''}</p>
- <h3>Что может измениться</h3><div class="pm"><div><b>Возможные плюсы</b><ul>${K.pros.map(x=>'<li>'+esc(x)+'</li>').join('')||'<li>-</li>'}</ul></div><div><b>На что обратить внимание</b><ul>${K.risks.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div></div><p class="lbl2">Общие последствия для такого типа вопроса, не оценка конкретного проекта, заявителя или людей.</p>
- ${d.has_result?`<h3>Итог обсуждения</h3><p>Жители: ${resT(d)}; замечания: ${remT(d)}; ${recT(d)}.</p><p class="lbl2">По заключению организатора, разбор автоматический, возможны неточности.</p>`:''}
+ <details><summary>Справка о процедуре и возможных последствиях</summary><div class="pm"><div><b>Возможные плюсы</b><ul>${K.pros.map(x=>'<li>'+esc(x)+'</li>').join('')||'<li>-</li>'}</ul></div><div><b>На что обратить внимание</b><ul>${K.risks.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div></div><p class="lbl2">Общие сведения для этого типа обсуждений.</p></details>
  ${d.near?`<h3>Что рядом</h3><table class="ft"><tr><td></td><td><b>до 500 м</b></td><td><b>до 1000 м</b></td></tr>${[['school','Школы'],['kg','Детские сады'],['clinic','Поликлиники'],['pharmacy','Аптеки'],['park','Парки']].map(([k,n])=>`<tr><td>${n}</td><td>${d.near[k][0]}</td><td>${d.near[k][1]}</td></tr>`).join('')}</table><p class="lbl2">От центра территории слушания. По данным 2ГИС и OSM на дату сборки, могут быть неполные. Остановок транспорта в этих данных нет.</p>`:''}
  <h3>История места</h3>${d.prior&&d.prior.length?d.prior.map(p=>`<div class="pr"><b><button class="lnk" data-open="${p.id}" style="text-align:left;font-weight:700">${esc(p.plain)}</button></b><br><span class="lbl2">${esc(p.why)} · ${fmt(p.end)} · ${p.has_result?('замечания: '+(p.rem===true?(p.remarks||'есть'):p.rem===false?'не было':'не распознано')+'; '+(p.rec==='отказ'?'организатор рекомендовал отказ':p.rec?'организатор рекомендовал утвердить':'рекомендация не распознана')):'итог не получен'}</span> <a href="${esc(p.url)}" target="_blank" rel="noopener">портал</a></div>`).join('')+'<p class="lbl2">Совпадение по кадастровому номеру, адресу, пересечению территорий, общим улицам или заявителю-организации; частных лиц не показываем.</p>':'<p class="lbl2">Прошлых слушаний по этому месту в базе не найдено (база охватывает 2023-2026).</p>'}
  ${posts(d.id)}
  <h3>Что пишут по этому слушанию</h3>${ops.length?ops.map(o=>`<div class="pr"><span class="chip">${esc(o.position)}</span> ${esc(o.platform||'')} · ${esc(o.date||'')} <a href="${esc(o.url)}" target="_blank" rel="noopener">ссылка</a></div>`).join(''):'<p class="lbl2">Проверенных ссылок пока нет.</p>'}
  <details><summary>Добавить ссылку на публичный пост</summary><div class="box"><select id="op"><option>за</option><option>против</option><option>вопрос</option></select> <input id="ol" type="url" placeholder="https://ссылка-на-пост" style="width:100%;margin:4px 0"><input id="ot" placeholder="Площадка (ВК, Telegram, сайт)" style="width:60%"> <input id="od" type="date"><br><button class="b" id="oc">Скопировать предложение</button><p class="lbl2">Страница ничего не публикует и не отправляет. Скопированный текст отправьте боту: ссылка сначала будет проверена, на карте она появится только после проверки.</p></div></details>
- <h3>Заготовки замечания</h3><p class="lbl2">Это шаблоны: отредактируйте и отправьте сами. Страница ничего никуда не отправляет. Для учёта замечания нужна идентификация участника (ФИО, дата рождения, адрес) по ст. 5.1 Градостроительного кодекса.</p>
- ${T.map((x,i)=>`<div class="box"><b>${x[0]}</b><textarea id="tp${i}" rows="5" aria-label="Текст заготовки: ${esc(x[0])}">${esc(x[1])}</textarea><button class="b cp" data-i="${i}">Копировать</button> <span class="lbl2">Не забудьте указать ФИО, дату рождения и адрес: так требует ст. 5.1 Градостроительного кодекса.</span></div>`).join('')}
+ ${st.open?`<h3>Заготовки замечания</h3><p class="lbl2">Это шаблоны: отредактируйте и отправьте сами. Страница ничего никуда не отправляет. Для учёта замечания нужна идентификация участника (ФИО, дата рождения, адрес) по ст. 5.1 Градостроительного кодекса.</p>
+ ${T.map((x,i)=>`<div class="box"><b>${x[0]}</b><textarea id="tp${i}" rows="5" aria-label="Текст заготовки: ${esc(x[0])}">${esc(x[1])}</textarea><button class="b cp" data-i="${i}">Копировать</button> <span class="lbl2">Не забудьте указать ФИО, дату рождения и адрес: так требует ст. 5.1 Градостроительного кодекса.</span></div>`).join('')}`:''}
  <h3>Что было после слушания</h3><p class="lbl2">Страница это не отслеживает автоматически. Проверить можно вручную:</p><ul class="lbl2l"><li>решение об утверждении - на <a href="${esc(d.url)}" target="_blank" rel="noopener">странице слушания</a> и в разделе нормативных актов портала мэрии;</li>${d.cad?`<li>статус участка по кадастровому номеру <b>${esc(d.cad)}</b> - скопируйте номер и найдите его на <a href="https://nspd.gov.ru/" target="_blank" rel="noopener">публичной кадастровой карте (НСПД)</a>.</li>`:''}</ul>
  <h3>Документы</h3><p>${docs||'<span class="lbl2">Документы не приложены.</span>'}</p>
  <details><summary>Официальное название</summary><p>${esc(d.title)}</p></details><p><a class="lnk" href="${BOT}?start=fb_${d.id}" target="_blank" rel="noopener">Нашли ошибку? Сообщить по слушанию №${d.id}</a></p></div>`;
  $('cb').onclick=closeCard;const cm=$('cm');if(cm)cm.onclick=()=>focusOn(d.id);
  if($('bc'))$('bc').onclick=()=>d.end&&dl('slushanie-'+d.id+'.ics',ics(d),'text/calendar');
  $('card').querySelectorAll('.moreb').forEach(b=>b.onclick=()=>{const s=b.previousElementSibling;const full=s.dataset.full;if(b.dataset.o){s.textContent=s.dataset.short;b.textContent='Читать далее';b.dataset.o=''}else{s.textContent=full;b.textContent='Свернуть';b.dataset.o='1'}});
- $('bs').onclick=e=>{e.preventDefault();const h=$('how');h.style.display=h.style.display==='none'?'block':'none'};
+ if($('bs')) $('bs').onclick=()=>{const h=$('how');h.hidden=!h.hidden;$('bs').setAttribute('aria-expanded',String(!h.hidden))};
  $('card').querySelectorAll('.cp').forEach(b=>b.onclick=()=>copy($('tp'+b.dataset.i).value,b));
  $('oc').onclick=()=>{const u=$('ol').value.trim();if(!/^https?:\/\//.test(u)){$('ol').focus();return}copy(`Предлагаю ссылку к слушанию #${d.id} («${d.plain}»)\nПозиция: ${$('op').value}\nПлощадка: ${$('ot').value||'-'}\nДата: ${$('od').value||'-'}\nСсылка: ${u}`,$('oc'))};
  $('card').onclick=e=>{const p=e.target.closest('[data-open]');if(p)openCard(+p.dataset.open)}}
 // ---------- состояние
 function tog(k,v){F[k]=F[k]===v?'':v;sync();if(k==='district')zoomDistrict()}
 function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',{now:'Идут сейчас',year:'Этот год'}[F.win]||'За '+F.win+' дн.']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);if(F.opn)c.push(['opn','Есть мнения']);
- $('chips').innerHTML=c.map(([k,t])=>`<span class="fc" data-x="${k}"><span title="${esc(t)}">${esc(t)}</span><b>×</b></span>`).join('')}
+ $('chips').innerHTML=c.map(([k,t])=>`<button class="fc" data-x="${k}" aria-label="Снять фильтр: ${esc(t)}"><span title="${esc(t)}">${esc(t)}</span><b aria-hidden="true">×</b></button>`).join('')}
 $('chips').onclick=e=>{const c=e.target.closest('[data-x]');if(!c)return;const k=c.dataset.x;F[k]=(typeof F[k]==='number')?0:'';sync();if(k==='district')zoomDistrict()};
 function ctrls(){$('fd').value=F.district;$('fk').value=F.kind;$('fy').value=F.year;$('fw').value=F.win;$('fq').value=F.q;$('fr').checked=!!F.rem;$('fo').checked=!!F.rej;$('fu').checked=!!F.chg;$('fm').checked=!!F.opn}
-function sync(){ctrls();const l=flt();$('cnt').textContent=`Найдено: ${l.length} из ${D.length}`;chips();kpis(l);charts();renderRight();drawMap(l);legend2()}
+const filterKeys = {district:'fd', kind:'fk', year:'fy', win:'fw', q:'fq', rem:'fr', rej:'fo', chg:'fu', opn:'fm', sec:'sec', init:'init', want:'want', gp:'gp'};
+function readFilters() {
+ const params = new URLSearchParams(location.hash.slice(1));
+ let explicit = params.has('all');
+ for (const [key, param] of Object.entries(filterKeys)) {
+  const value = params.get(param) || '';
+  if (typeof F[key] === 'number') F[key] = Number(value === '1');
+  else if (key === 'win') F[key] = ['now','7','30','90','year'].includes(value) ? value : '';
+  else if (dim(key)) F[key] = value && D.some(d => dim(key).get(d) === value) ? value : '';
+  else F[key] = value;
+  if (F[key]) explicit = true;
+ }
+ return explicit;
+}
+function selectionUrl(id, forSharing=false) {
+ const url = new URL(forSharing && location.protocol==='file:' ? document.querySelector('link[rel=canonical]').href : location.href);
+ if (id) url.searchParams.set('id', id);
+ else url.searchParams.delete('id');
+ const params = new URLSearchParams();
+ for (const [key, param] of Object.entries(filterKeys)) if (F[key]) params.set(param, F[key]);
+ if (!params.size && !id && nOpen && !F.win) params.set('all','1');
+ url.hash = params.toString();
+ return url;
+}
+function writeLocation() {
+ if (location.protocol === 'file:') return;
+ const url=selectionUrl(openId);
+ if (url.href!==location.href) history.replaceState(null,'',url);
+}
+function sync(){ctrls();const l=flt();
+ if(openId && !l.some(d=>d.id===openId)) openId=null;
+ writeLocation();
+ $('applyFilters').textContent='Показать записи ('+l.length+')';$('cnt').textContent=`Найдено: ${l.length} из ${D.length}`;chips();kpis(l);charts();renderRight();drawMap(l);legend2()}
 const uniq=a=>[...new Set(a)].filter(Boolean).sort();
 uniq(D.map(d=>d.district)).forEach(v=>$('fd').add(new Option(v,v)));uniq(D.map(d=>d.kind)).forEach(v=>$('fk').add(new Option(v,v)));uniq(D.map(d=>(d.start||'').slice(0,4))).reverse().forEach(v=>$('fy').add(new Option(v,v)));
 $('fd').onchange=()=>{F.district=$('fd').value;sync();zoomDistrict()};$('fk').onchange=()=>{F.kind=$('fk').value;sync()};$('fy').onchange=()=>{F.year=$('fy').value;sync()};$('fw').onchange=()=>{F.win=$('fw').value;sync()};
-$('fq').oninput=()=>{F.q=$('fq').value;sync()};$('fr').onchange=()=>{F.rem=$('fr').checked?1:0;sync()};$('fo').onchange=()=>{F.rej=$('fo').checked?1:0;sync()};$('fu').onchange=()=>{F.chg=$('fu').checked?1:0;sync()};$('fm').onchange=()=>{F.opn=$('fm').checked?1:0;sync()};
-$('ft').onclick=()=>$('bar').classList.toggle('open');
+$('fq').oninput=()=>{F.q=$('fq').value;openId=null;sync();if(innerWidth<=940)setPanel('pl')};$('fr').onchange=()=>{F.rem=$('fr').checked?1:0;sync()};$('fo').onchange=()=>{F.rej=$('fo').checked?1:0;sync()};$('fu').onchange=()=>{F.chg=$('fu').checked?1:0;sync()};$('fm').onchange=()=>{F.opn=$('fm').checked?1:0;sync()};
+const filterDialog=$('filterDialog');
+$('ft').onclick=()=>filterDialog.showModal();
+$('filterClose').onclick=()=>filterDialog.close();
+$('applyFilters').onclick=()=>{
+ filterDialog.close();
+ closeCard();
+ if(innerWidth<=940) setPanel('pl');
+ $('pl').focus();
+};
+filterDialog.addEventListener('click',e=>{
+ if(e.target.closest('#ctlb,#opnb,#cdcb')) filterDialog.close();
+});
+$('statsToggle').onclick=()=>{
+ const hidden=$('main').classList.toggle('no-stats');
+ $('statsToggle').setAttribute('aria-expanded',String(!hidden));
+ $('statsToggle').textContent=hidden?'Показать цифры':'Скрыть цифры';
+};
+for(const [button, state] of [['legendToggle','show-legend'],['opinionsToggle','show-opinions']]){
+ $(button).onclick=()=>$(button).setAttribute('aria-expanded',String($('pm').classList.toggle(state)));
+}
+$('shareList').onclick=()=>copy(selectionUrl(null,true).href,$('shareList'));
+$('card').addEventListener('click',e=>{
+ const button=e.target.closest('[data-share-card]');
+ if(button) copy(selectionUrl(openId,true).href,button);
+});
 // ---------- панель «Контроль»
 function ctlStats(l){l=l.filter(d=>!d.arch);const r=l.filter(d=>d.has_result),pk=r.filter(d=>d.residents!=null),rk=r.filter(d=>d.rem!=null),wr=r.filter(d=>d.rem===true),rc=r.filter(d=>d.rec);
  const pc=(a,b)=>b?Math.round(100*a/b):null;
@@ -310,15 +413,31 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('ctl').style.disp
 $('rs').onclick=()=>{Object.keys(F).forEach(k=>F[k]=typeof F[k]==='number'?0:'');openId=null;sync();zoomDistrict()};
 $('csv').onclick=()=>{const l=flt(),h=['Что предлагают','Официальное название','Район','Тип','Начало','Конец','Инициатор','Замечаний','Итог','Было','Станет','Зона ПЗЗ','Зона генплана','Кадастровый номер','Ссылка'],q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
  const t='﻿'+[h.map(q).join(';')].concat(l.map(d=>[d.plain,d.title,d.district,d.kind,d.start,d.end,d.init,d.remarks,recT(d),d.was,d.want,d.zone,d.gp,d.cad,d.url].map(q).join(';'))).join('\r\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='слушания-ярославль.csv';a.click()};
-function setPanel(id){document.querySelectorAll('#mtabs button').forEach(b=>b.classList.toggle('on',b.dataset.p===id));['pc','pm','pl'].forEach(p=>$(p).classList.toggle('on',p===id));setTimeout(()=>m.invalidateSize(),30)}
+function setPanel(id){document.querySelectorAll('#mtabs button').forEach(b=>b.classList.toggle('on',b.dataset.p===id));['pc','pm','pl'].forEach(p=>$(p).classList.toggle('on',p===id));setTimeout(()=>{m.invalidateSize();if(id==='pm'&&pendingDistrict)zoomDistrict()},30)}
 $('mtabs').onclick=e=>{const b=e.target.closest('button');if(b)setPanel(b.dataset.p)};
 function desk(){if(innerWidth>940)['pc','pm','pl'].forEach(p=>$(p).classList.remove('on'));else if(!['pc','pm','pl'].some(p=>$(p).classList.contains('on')))setPanel('pm');setTimeout(()=>m.invalidateSize(),30)}
 function nowBanner(){const n=D.filter(d=>(d.end||'')>=todayS).length,el=$('now');
  if(n){el.className='';el.innerHTML=`<b>Сейчас идёт ${n} ${n%10===1&&n%100!==11?'слушание':(n%10>1&&n%10<5&&(n%100<10||n%100>20))?'слушания':'слушаний'}</b> <span>приём замечаний ещё не закончился</span> <button class="b" id="nb">Показать</button>`;$('nb').onclick=()=>{F.win='now';sync()}}
- else{el.className='none';el.innerHTML=`<b>Сейчас открытых слушаний нет</b> <span>новые появятся на портале мэрии</span>`}
+ else{el.className='none';el.innerHTML=`<b>Сейчас открытых слушаний нет</b> <span>новые появятся на портале мэрии</span> <button class="lnk" id="archive">Посмотреть архив</button>`;
+ $('archive').onclick=()=>{F.win='';closeCard();sync();if(innerWidth<=940)setPanel('pl');$('pl').focus()}}
  return n}
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.it,.bar2')){e.preventDefault();e.target.click()}});
 try{new ResizeObserver(()=>{m.invalidateSize({pan:false});const z=m.getSize();if(!touched&&z.x>50&&z.y>50)m.fitBounds(CITY,{animate:false})}).observe($('pm'))}catch(e){}
-strip();addEventListener('resize',desk);desk();const nOpen=nowBanner();if(nOpen&&!new URLSearchParams(location.search).get('id'))F.win='now';sync();
-try{const q=+new URLSearchParams(location.search).get('id');if(q&&D.some(d=>d.id===q)){touched=true;const dq=D.find(d=>d.id===q);if(dq.lat!=null){const keep=innerWidth>940;setPanel('pm');m.invalidateSize();const o=mk[q];if(o&&o.getBounds&&dq.how&&!dq.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:16,animate:false});else m.setView([dq.lat,dq.lon],16,{animate:false});if(!keep)setPanel('pl')}openCard(q,true);setTimeout(()=>{m.invalidateSize()},500)}}catch(e){}
+strip();addEventListener('resize',desk);desk();
+const nOpen=nowBanner();
+function restoreLocation() {
+ const requested=Number(new URLSearchParams(location.search).get('id'));
+ const record=D.find(d=>d.id===requested);
+ const explicit=readFilters();
+ if(!explicit && !record && nOpen) F.win='now';
+ openId=null;
+ sync();
+ if(F.district) zoomDistrict();
+ if(record){
+  if(record.lat!=null && mk[record.id]) focusOn(record.id);
+  openCard(record.id,true);
+ }else if(explicit && innerWidth<=940) setPanel('pl');
+}
+restoreLocation();
+addEventListener('hashchange',restoreLocation);
 </script></body></html>
