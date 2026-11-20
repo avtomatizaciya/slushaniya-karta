@@ -102,6 +102,14 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
  #listv .lh{column-gap:4px}#listv .lh select{max-width:33%}
  .filter-foot button{font-size:13px}
 }
+.kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:8px}
+button.kpi{display:flex;align-items:center;gap:7px;min-height:42px;text-align:left;padding:5px 8px;font:inherit;color:var(--ink);background:white;cursor:pointer}
+button.kpi b{font-size:17px;min-width:2ch;color:#3932a3}button.kpi span{color:var(--ink);font-size:12px;line-height:1.2}
+button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#f0efff}button.kpi:focus-visible{outline:2px solid var(--a)}
+.metric-note{padding:0 10px 2px;font-size:12px;color:var(--mut)}.metric-note summary{cursor:pointer}.metric-note p{margin:4px 0}.breakdown{display:flex;align-items:center;gap:8px;padding:6px 9px;color:var(--mut);font-weight:600}
+.breakdown select{min-width:0;flex:1;border:1px solid var(--line);background:white;color:var(--ink);font:inherit;border-radius:6px;padding:5px}
+#charts .chart{padding-top:6px}#charts .bar2{min-height:26px}
+@media(max-width:940px){button.kpi{min-height:44px}.breakdown select{min-height:44px}#charts .bar2{min-height:36px}}
 </style></head><body>
 <header role="banner"><h1>Слушания Ярославля</h1><small>Публичные обсуждения мэрии, 2009-2026</small><a class="mkd" href="https://yar.city/maps/neighbors/" target="_blank" rel="noopener" title="Карта сообществ соседей по домам (сайт yar.city)">Карта домов МКД<small>сообщества соседей по домам</small></a><a class="bot" href="https://t.me/slushaniya_yaroslavl_bot" target="_blank" rel="noopener">Подписаться в боте</a></header>
 <div id="now" role="status"></div>
@@ -124,7 +132,7 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
  <div class="filter-foot"><button class="lnk" id="rs">Сбросить всё</button><button class="b blue" id="applyFilters">Показать результаты</button></div>
 </dialog>
 <main id="main">
-<section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"></div><div id="charts"></div></section>
+<section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"></div><details class="metric-note"><summary>Как посчитаны цифры</summary><p id="metricNote"></p></details><label class="breakdown">Разбивка <select id="breakdown"></select></label><div id="charts"></div></section>
 <section class="panel on" id="pm"><div id="m"></div><div class="map-tools"><button class="map-tool" id="legendToggle" aria-controls="leg" aria-expanded="false">Условные знаки</button><button class="map-tool" id="opinionsToggle" aria-controls="strip" aria-expanded="false">Мнения</button></div><div id="strip" role="group" aria-label="Мнения авторов" title="Публичные посты авторов ВКонтакте. Мнения принадлежат авторам, не позиция проекта."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
 <section class="panel" id="pl" tabindex="0" aria-label="Список слушаний и карточка"><div id="listv"><div class="lh"><b id="lc"></b><button class="lnk" id="shareList">Поделиться подборкой</button><select id="so" aria-label="Сортировка списка"><option value="end">по дате</option><option value="remarks">по замечаниям</option></select></div><div id="list"></div></div><div id="card" style="display:none"></div></section>
 </main>
@@ -152,10 +160,21 @@ const DIMS=[
  {k:'init',t:'Инициатор (где указан в материалах)',get:d=>d.arch?null:(d.init||'не указан'),top:5},
  {k:'want',t:'Во что переводят участки',get:d=>d.want||null,top:6},
  {k:'gp',t:'Зона генплана в месте слушания (приблизительно)',get:d=>d.gp||null,top:6}];
-const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0,opn:0,sec:''};const opN=id=>(X.posts||[]).filter(o=>(o.h||[]).includes(id)).length,opB=id=>opN(id)?`<span class="chip" style="background:#ede9fe;color:#4c1d95">есть мнения (${opN(id)})</span>`:'';const OPS=new Set((X.posts||[]).flatMap(o=>o.h||[]));
+const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0,opn:0,sec:'',metric:''};const opN=id=>(X.posts||[]).filter(o=>(o.h||[]).includes(id)).length,opB=id=>opN(id)?`<span class="chip" style="background:#ede9fe;color:#4c1d95">есть мнения (${opN(id)})</span>`:'';const OPS=new Set((X.posts||[]).flatMap(o=>o.h||[]));
 const dim=k=>DIMS.find(x=>x.k===k);
+const metrics=[
+ {key:'hearings',label:'Обсуждения',match:d=>!d.arch},
+ {key:'change',label:'Меняют вид',match:d=>!d.arch && change(d)},
+ {key:'remarks',label:'Замечаний всего',match:d=>!d.arch && d.has_result && d.remarks>0,weight:d=>d.remarks,tip:'Сумма замечаний. Открыть обсуждения, где они посчитаны'},
+ {key:'commented',label:'С замечаниями',match:d=>!d.arch && d.has_result && d.rem===true,tip:'Обсуждения, в которых по заключению были замечания'},
+ {key:'residents',label:'С участием жителей',match:d=>!d.arch && d.has_result && d.residents===true,tip:'Участие жителей распознано в заключении'},
+ {key:'refused',label:'Рекомендован отказ',match:d=>!d.arch && d.rec==='отказ',tip:'Отказы по распознанным рекомендациям организатора'},
+ {key:'documents',label:'Городские документы',match:d=>!!d.arch}
+];
+const metricByKey=new Map(metrics.map(metric=>[metric.key,metric]));
 function flt(except){const q=F.q.trim().toLowerCase();
- return D.filter(d=>{for(const x of DIMS){if(x.k!==except&&F[x.k]&&x.get(d)!==F[x.k])return false}
+ const metric=except==='metric'?null:metricByKey.get(F.metric);
+ return D.filter(d=>{if(metric && !metric.match(d))return false;for(const x of DIMS){if(x.k!==except&&F[x.k]&&x.get(d)!==F[x.k])return false}
   if(F.win&&!(F.win==='now'?(d.end||'')>=todayS:F.win==='year'?(d.start||'').startsWith(todayS.slice(0,4)):(d.end||'')>=back(+F.win)))return false;
   if(F.rem&&!d.remarks)return false;if(F.rej&&d.rec!=='отказ')return false;if(F.chg&&!change(d))return false;if(F.opn&&!OPS.has(d.id))return false;
   if(q&&!(d.plain+' '+d.title+' '+(d.addr||'')+' '+(d.init||'')).toLowerCase().includes(q))return false;return true})}
@@ -213,16 +232,40 @@ $('leg').innerHTML=Object.entries(COL).map(([k,v])=>`<i style="background:${v}">
 function legend2(){$('leg2').innerHTML='<b>Генплан: зоны</b> <small>(клик - фильтр)</small>'+GL.map(l=>`<span class="leg2i${F.gp===l.name?' sel':''}" data-gp="${esc(l.name)}"><i style="background:rgb(${l.rgb})"></i>${esc(l.name)}</span>`).join('')+'<small>Источник: карта функциональных зон генплана, сайт мэрии. Привязка приблизительная.</small>'}
 $('leg2').onclick=e=>{const s=e.target.closest('[data-gp]');if(s)tog('gp',s.dataset.gp)};
 // ---------- цифры
-function kpis(all){const list=all.filter(d=>!d.arch),na=all.length-list.length,r=list.filter(d=>d.has_result),rm=r.reduce((s,d)=>s+d.remarks,0);
- $('kpis').innerHTML=[[list.length,'общественных обсуждений'],[list.filter(change).length,'меняют вид'],[rm,'замечаний'],[r.filter(d=>d.rem===true).length,'с замечаниями (из '+r.length+' с итогами; у '+r.filter(d=>d.rem==null).length+' не распознано)'],[r.filter(d=>d.residents===true).length,'с участием жителей (где распознано)'],[list.filter(d=>d.rec==='отказ').length,'отказов (по распознанным итогам)']].concat(na?[[na,'городских документов: генплан, ПЗЗ, смена вида использования (без итогов, в цифры выше не входят)']]:[]).map(x=>`<div class="kpi"><b>${x[0]}</b><span>${x[1]}</span></div>`).join('')}
+function kpis() {
+ const scope=flt('metric');
+ const reports=scope.filter(d=>!d.arch && d.has_result);
+ const unknown=reports.filter(d=>d.rem==null).length;
+ $('metricNote').textContent=`Цифры учитывают район и остальные фильтры. Выберите показатель, чтобы увидеть его записи. Замечания, участие жителей и рекомендации определены по заключениям. Заключений в выборке: ${reports.length}. Наличие замечаний не распознано в ${unknown}. Городские документы посчитаны отдельно.`;
+ $('kpis').innerHTML=metrics.map(metric=>{
+  const rows=scope.filter(metric.match);
+  const value=metric.weight ? rows.reduce((total,row)=>total+metric.weight(row),0) : rows.length;
+  const hint=metric.tip || ('Показать записи: '+metric.label);
+  return `<button class="kpi" data-metric="${metric.key}" title="${esc(hint)}" aria-pressed="${F.metric===metric.key}"><b>${value}</b><span>${metric.label}</span></button>`;
+ }).join('');
+}
+$('kpis').onclick=e=>{
+ const button=e.target.closest('[data-metric]');
+ if(!button)return;
+ const key=button.dataset.metric;
+ openId=null;
+ tog('metric',key);
+ if(innerWidth<=940){setPanel('pl');$('pl').focus()}
+ else $('kpis').querySelector('[data-metric="'+key+'"]').focus({preventScroll:true});
+};
 const expanded={};
-function charts(){$('charts').innerHTML=DIMS.map(x=>{const c={};flt(x.k).forEach(d=>{const v=x.get(d);if(v!=null)c[v]=(c[v]||0)+1});
+const breakdown=$('breakdown');
+breakdown.add(new Option('Только показатели',''));
+DIMS.forEach(x=>breakdown.add(new Option(x.t,x.k)));
+breakdown.value=innerWidth<=940?'':'district';
+breakdown.onchange=()=>charts();
+function charts(){$('charts').innerHTML=DIMS.filter(x=>x.k===breakdown.value).map(x=>{const c={};flt(x.k).forEach(d=>{const v=x.get(d);if(v!=null)c[v]=(c[v]||0)+1});
  let e=Object.entries(c);e.sort(x.sortKey?(a,b)=>b[0].localeCompare(a[0]):(a,b)=>b[1]-a[1]);
  if(F[x.k]&&!c[F[x.k]])e.unshift([F[x.k],0]);const mx=Math.max(1,...e.map(a=>a[1])),shown=expanded[x.k]?e:e.slice(0,x.top);
  if(F[x.k]&&!shown.some(a=>a[0]===F[x.k])){const s=e.find(a=>a[0]===F[x.k]);if(s)shown.push(s)}
  const known=e.filter(a=>a[0]!=='не указан').reduce((s,a)=>s+a[1],0),tot=e.reduce((s,a)=>s+a[1],0),fold=x.k==='init'&&!F.init&&tot&&known/tot<1/3;
  if(fold)return `<div class="chart"><details><summary><h2 style="display:inline">${x.t}</h2> <span class="lbl2">(указан у ${known} из ${tot}; развернуть)</span></summary>`+shown.map(([k,v])=>`<div class="bar2${k==='не указан'?' muted':''}" data-d="${x.k}" data-v="${esc(k)}" tabindex="0" role="button"><span class="nm">${esc(k)}</span><span><i style="width:${Math.max(2,v/mx*100)}%"></i></span><span class="n">${v}</span></div>`).join('')+'</details></div>';
- return `<div class="chart ${F[x.k]?'has-sel':''}"><h2>${x.t}</h2>`+(e.length?shown.map(([k,v])=>`<div class="bar2${F[x.k]===k?' sel':''}${k==='не указан'?' muted':''}" data-d="${x.k}" data-v="${esc(k)}" tabindex="0" role="button" aria-pressed="${F[x.k]===k}"><span class="nm">${esc(k)}</span><span><i style="width:${Math.max(2,v/mx*100)}%"></i></span><span class="n">${v}</span></div>`).join('')+(e.length>x.top?`<div class="more" data-more="${x.k}">${expanded[x.k]?'свернуть':'ещё '+(e.length-shown.length)}</div>`:''):'<div class="lbl2" style="color:var(--mut)">нет данных в выбранном срезе</div>')+(x.k==='district'&&c['не указан']?'<div class="lbl2">«не указан»: у архивных записей район не указан</div>':'')+'</div>'}).join('')}
+ return `<div class="chart ${F[x.k]?'has-sel':''}">`+(e.length?shown.map(([k,v])=>`<div class="bar2${F[x.k]===k?' sel':''}${k==='не указан'?' muted':''}" data-d="${x.k}" data-v="${esc(k)}" tabindex="0" role="button" aria-pressed="${F[x.k]===k}"><span class="nm">${esc(k)}</span><span><i style="width:${Math.max(2,v/mx*100)}%"></i></span><span class="n">${v}</span></div>`).join('')+(e.length>x.top?`<div class="more" data-more="${x.k}">${expanded[x.k]?'свернуть':'ещё '+(e.length-shown.length)}</div>`:''):'<div class="lbl2" style="color:var(--mut)">нет данных в выбранном срезе</div>')+(x.k==='district'&&c['не указан']?'<div class="lbl2">«не указан»: у архивных записей район не указан</div>':'')+'</div>'}).join('')}
 $('charts').onclick=e=>{const b=e.target.closest('[data-d]');if(b){tog(b.dataset.d,b.dataset.v);return}const mo=e.target.closest('[data-more]');if(mo){expanded[mo.dataset.more]=!expanded[mo.dataset.more];charts()}};
 // ---------- список и карточка
 let openId=null;
@@ -304,17 +347,18 @@ function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]
  $('card').onclick=e=>{const p=e.target.closest('[data-open]');if(p)openCard(+p.dataset.open)}}
 // ---------- состояние
 function tog(k,v){F[k]=F[k]===v?'':v;sync();if(k==='district')zoomDistrict()}
-function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',{now:'Идут сейчас',year:'Этот год'}[F.win]||'За '+F.win+' дн.']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);if(F.opn)c.push(['opn','Есть мнения']);
+function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',{now:'Идут сейчас',year:'Этот год'}[F.win]||'За '+F.win+' дн.']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);if(F.opn)c.push(['opn','Есть мнения']);if(F.metric)c.push(['metric',metricByKey.get(F.metric).label]);
  $('chips').innerHTML=c.map(([k,t])=>`<button class="fc" data-x="${k}" aria-label="Снять фильтр: ${esc(t)}"><span title="${esc(t)}">${esc(t)}</span><b aria-hidden="true">×</b></button>`).join('')}
 $('chips').onclick=e=>{const c=e.target.closest('[data-x]');if(!c)return;const k=c.dataset.x;F[k]=(typeof F[k]==='number')?0:'';sync();if(k==='district')zoomDistrict()};
 function ctrls(){$('fd').value=F.district;$('fk').value=F.kind;$('fy').value=F.year;$('fw').value=F.win;$('fq').value=F.q;$('fr').checked=!!F.rem;$('fo').checked=!!F.rej;$('fu').checked=!!F.chg;$('fm').checked=!!F.opn}
-const filterKeys = {district:'fd', kind:'fk', year:'fy', win:'fw', q:'fq', rem:'fr', rej:'fo', chg:'fu', opn:'fm', sec:'sec', init:'init', want:'want', gp:'gp'};
+const filterKeys = {district:'fd', kind:'fk', year:'fy', win:'fw', q:'fq', rem:'fr', rej:'fo', chg:'fu', opn:'fm', sec:'sec', init:'init', want:'want', gp:'gp', metric:'metric'};
 function readFilters() {
  const params = new URLSearchParams(location.hash.slice(1));
  let explicit = params.has('all');
  for (const [key, param] of Object.entries(filterKeys)) {
   const value = params.get(param) || '';
   if (typeof F[key] === 'number') F[key] = Number(value === '1');
+  else if (key === 'metric') F[key] = metricByKey.has(value) ? value : '';
   else if (key === 'win') F[key] = ['now','7','30','90','year'].includes(value) ? value : '';
   else if (dim(key)) F[key] = value && D.some(d => dim(key).get(d) === value) ? value : '';
   else F[key] = value;
@@ -340,7 +384,7 @@ function writeLocation() {
 function sync(){ctrls();const l=flt();
  if(openId && !l.some(d=>d.id===openId)) openId=null;
  writeLocation();
- $('applyFilters').textContent='Показать записи ('+l.length+')';$('cnt').textContent=`Найдено: ${l.length} из ${D.length}`;chips();kpis(l);charts();renderRight();drawMap(l);legend2()}
+ $('applyFilters').textContent='Показать записи ('+l.length+')';$('cnt').textContent=`Найдено: ${l.length} из ${D.length}`;chips();kpis();charts();renderRight();drawMap(l);legend2()}
 const uniq=a=>[...new Set(a)].filter(Boolean).sort();
 uniq(D.map(d=>d.district)).forEach(v=>$('fd').add(new Option(v,v)));uniq(D.map(d=>d.kind)).forEach(v=>$('fk').add(new Option(v,v)));uniq(D.map(d=>(d.start||'').slice(0,4))).reverse().forEach(v=>$('fy').add(new Option(v,v)));
 $('fd').onchange=()=>{F.district=$('fd').value;sync();zoomDistrict()};$('fk').onchange=()=>{F.kind=$('fk').value;sync()};$('fy').onchange=()=>{F.year=$('fy').value;sync()};$('fw').onchange=()=>{F.win=$('fw').value;sync()};
