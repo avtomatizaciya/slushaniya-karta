@@ -404,7 +404,7 @@ function templ(d){const w=d.addr||d.plain,ttl=`«${d.plain}»`+(d.addr&&!d.plain
  ['Прошу учесть / разъяснить',`Прошу учесть и разъяснить по вопросу ${ttl}:\n1) [ваш вопрос или условие];\n2) [ваш вопрос или условие].\nПрошу направить ответ в установленном порядке.`+sign]]}
 function cardBrief(d){
  const st=stat(d), decision=d.decision, report=d.docs.find(x=>/^заключение/i.test(x.name));
- const when=d.project?`${fmt(d.start)} · дата постановления. ${d.procedure}`:d.arch?`${fmt(d.start)} · дата постановления о назначении. Даты слушаний уточняются.`:d.start&&d.end?`${fmt(d.start)} – ${fmt(d.end)}`:d.end?`До ${fmt(d.end)}`:'Даты уточняются.';
+ const when=decision?.when||(d.project?`${fmt(d.start)} · дата постановления. ${d.procedure}`:d.arch?`${fmt(d.start)} · дата постановления о назначении. Даты слушаний уточняются.`:d.start&&d.end?`${fmt(d.start)} – ${fmt(d.end)}`:d.end?`До ${fmt(d.end)}`:'Даты уточняются.');
  const result=decision?.status||(st.open?'Идёт приём замечаний.':d.rec?recT(d):report?'Заключение опубликовано. Решение мэрии уточняется.':'Итоговый акт пока не найден.');
  const proposed=d.want?`${d.was?d.was+' → ':''}${d.want}`:d.purpose;
  const short=proposed?.length>185?proposed.slice(0,185).replace(/\s+\S*$/,'')+'…':proposed;
@@ -451,7 +451,7 @@ function boundarySources(boundary){
 }
 function cardProject(d){
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button><button class="lnk" id="cm">На карте</button></div><div class="cd">
- <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span>${d.boundary?.partial?'<span class="chip">подтверждённая часть</span>':''}</div>
+ <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span>${d.boundary?.partial?'<span class="chip">подтверждённая часть</span>':'<span class="chip">точная граница</span>'}</div>
  ${cardBrief(d)}
  ${decisionBlock(d.decision)}
  <p class="lbl2">${esc(d.how)}</p>${boundarySources(d.boundary)}
