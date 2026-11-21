@@ -363,7 +363,7 @@ function renderRegistry(){
  const query=$('registrySearch').value.trim().toLocaleLowerCase('ru').replaceAll('ё','е').split(/\s+/).filter(Boolean);
  const verified=$('registryVerified').checked;
  const rows=X.registry.filter(row=>{
-  const text=[row.title,row.date,row.number,row.gis].join(' ').toLocaleLowerCase('ru').replaceAll('ё','е');
+  const text=[row.title,row.date,row.number,row.gis,row.status].join(' ').toLocaleLowerCase('ru').replaceAll('ё','е');
   return (!verified||row.verified)&&query.every(word=>text.includes(word));
  });
  const pages=Math.ceil(rows.length/registryPageSize);
