@@ -138,7 +138,7 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 </dialog>
 <main id="main">
 <section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"></div><details class="metric-note"><summary>Как посчитаны цифры</summary><p id="metricNote"></p></details><label class="breakdown">Разбивка <select id="breakdown"></select></label><div id="charts"></div></section>
-<section class="panel on" id="pm"><div id="m"></div><div class="map-tools"><button class="map-tool" id="legendToggle" aria-controls="leg" aria-expanded="false">Условные знаки</button><button class="map-tool" id="opinionsToggle" aria-controls="strip" aria-expanded="false">Мнения</button></div><div id="strip" role="group" aria-label="Мнения авторов" title="Публичные посты авторов ВКонтакте. Мнения принадлежат авторам, не позиция проекта."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
+<section class="panel on" id="pm"><div id="m"></div><div class="map-tools"><button class="map-tool" id="legendToggle" aria-controls="leg" aria-expanded="false">Условные знаки</button><button class="map-tool" id="opinionsToggle" aria-controls="strip" aria-expanded="false">Мнения</button></div><div id="strip" role="group" aria-label="Мнения авторов" title="Записи со страниц авторов ВКонтакте. У репостов указан источник."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
 <section class="panel" id="pl" tabindex="0" aria-label="Список слушаний и карточка"><div id="listv"><div class="lh"><b id="lc"></b><button class="lnk" id="shareList">Поделиться подборкой</button><select id="so" aria-label="Сортировка списка"><option value="end">по дате</option><option value="remarks">по замечаниям</option></select></div><div id="list"></div></div><div id="card" style="display:none"></div></section>
 </main>
 <div id="cdc" class="ovl" role="dialog" aria-label="Городские документы" style="display:none"></div>
@@ -209,16 +209,24 @@ let SHOWOP=true;const APAL=['#6d28d9','#0f766e','#b45309','#be123c','#1d4ed8'],A
 function acol(a){if(!AC[a])AC[a]=APAL[Object.keys(AC).length%APAL.length];return AC[a]}
 function ini(a){return a.split(/\s+/).map(w=>w[0]).join(' ').toUpperCase()}
 function postBody(o) {
- const full=X.fullPosts?.[o.k];
- const sourceLabel=full ? 'Оригинал в ВК' : 'Открыть в ВК · доступ зависит от настроек автора';
+ const entry=X.fullPosts?.[o.k];
+ const full=typeof entry==='string' ? entry : entry?.text;
+ const via=entry?.via;
+ const summaryOnly=via && !full;
+ const sourceLabel=entry ? 'Запись в ВК' : 'Открыть в ВК · доступ зависит от настроек автора';
  const source=`<a href="${esc(o.u)}" target="_blank" rel="noopener">${sourceLabel}</a>`;
- const excerpt=`<p class="excerpt">${esc(o.s)}</p>`;
- if(!full) return excerpt+source;
- const linked=full.split(/(https?:\/\/[^\s<>"\[\]]+)/g).map((part,i)=>i%2
+ const body=full || entry?.summary || '';
+ const preview=entry ? (body.length>250 ? body.slice(0,250).replace(/\s+\S*$/,'')+'…' : body) : o.s;
+ const excerpt=`<p class="excerpt">${esc(preview)}</p>`;
+ if(!body) return excerpt+source;
+ const credit=via ? `<div class="lbl2">Репост · источник: ${esc(via)}</div>` : '';
+ const label=summaryOnly ? 'О репосте' : 'Читать на карте';
+ const linked=body.split(/(https?:\/\/[^\s<>"\[\]]+)/g).map((part,i)=>i%2
   ? `<a href="${esc(part)}" target="_blank" rel="noopener">${esc(part)}</a>` : esc(part)).join('');
- return `<div class="post-copy">${excerpt}<details class="op-read" data-post="${esc(o.k)}"><summary><span class="read-label">Читать на карте</span><span class="fold-label">Свернуть текст</span></summary><div class="op-text">${linked}</div></details>${source}</div>`;
+ const scope=summaryOnly ? '<p class="lbl2">Краткое содержание публикации источника</p>' : via ? `<p class="lbl2">Комментарий к репосту · ${esc(o.a)}</p>` : '';
+ return `<div class="post-copy">${credit}${excerpt}<details class="op-read" data-post="${esc(o.k)}"><summary><span class="read-label">${label}</span><span class="fold-label">Свернуть текст</span></summary>${scope}<div class="op-text">${linked}</div></details>${source}</div>`;
 }
-function opPopup(a,l){return `<div class="opp"><b>${l[0].au?`<a href="${esc(l[0].au)}" target="_blank" rel="noopener">${esc(a)}</a>`:esc(a)}</b>${l.map(o=>`<div class="lbl2" style="margin-top:6px">${esc(o.d||'')}</div>${postBody(o)}`).join('')}<p class="lbl2" style="margin-top:6px">Публичный пост автора ВКонтакте. Мнение принадлежит автору, не позиция проекта.</p></div>`}
+function opPopup(a,l){return `<div class="opp"><b>${l[0].au?`<a href="${esc(l[0].au)}" target="_blank" rel="noopener">${esc(a)}</a>`:esc(a)}</b>${l.map(o=>`<div class="lbl2" style="margin-top:6px">${esc(o.d||'')}</div>${postBody(o)}`).join('')}<p class="lbl2" style="margin-top:6px">Запись со страницы автора ВКонтакте. У репостов указан источник.</p></div>`}
 function opIcons(d){const by={};(X.posts||[]).filter(o=>(o.h||[]).includes(d.id)).forEach(o=>(by[o.a]=by[o.a]||[]).push(o));
  Object.keys(by).forEach((a,i)=>{const l=by[a],c=acol(a),av=l[0].av,n=l.length;
   const ic=L.divIcon({className:'opa',iconSize:[46,46],iconAnchor:[-4-i*32,52],html:`<span class="opc" style="background:${c}">${esc(ini(a))}${av?`<img src="${esc(av)}" alt="" onerror="this.remove()">`:''}${n>1?`<i>${n}</i>`:''}</span>`});
@@ -449,12 +457,12 @@ function ctl(){const a=ctlStats(flt()),all=ctlStats(D);
  $('ctlx').onclick=()=>{$('ctl').style.display='none'};
  $('ctl').onclick=e=>{const r=e.target.closest('[data-ck]');if(r){tog(r.dataset.ck,r.dataset.cv);ctl()}}}
 
-const NOTE='Публичные посты авторов ВКонтакте. Мнения принадлежат авторам, не позиция проекта.';
+const NOTE='Записи со страниц авторов ВКонтакте. У репостов указан источник.';
 const TOPIC_RU={'слушания':'Слушания','застройка и наследие':'Застройка и наследие'};
 function postHtml(o,hide){const hs=hide?'':(o.h||[]).map(id=>{const d=D.find(x=>x.id===id);return d?`<div class="lbl2" style="margin-top:4px">Слушание: ${esc(d.plain)}</div><button class="b shb" data-show="${id}">Показать слушание</button> `:''}).join('');return `<div class="po"><div class="lbl2">${esc(o.a)} · ${esc(o.d||'')} · ${esc(TOPIC_RU[o.t]||o.t||'')}</div>${postBody(o)}${hs}</div>`}
 function posts(id){const l=(X.posts||[]).filter(o=>o.h&&o.h.includes(id));return l.length?`<h3>Мнения</h3>${l.map(o=>postHtml(o,1)).join('')}<p class="lbl2">${NOTE}</p>`:''}
 function opn(){const P=X.posts||[],au=[...new Set(P.map(o=>o.a))],tp=[...new Set(P.map(o=>o.t))],ds=P.map(o=>o.d).filter(Boolean).sort();
- if(!$('opn').dataset.init){$('opn').dataset.init=1;$('opn').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Мнения градозащитников</h2><button class="rst" id="opnx">Закрыть</button></div><p class="lbl2">${NOTE} Записи с кнопкой «Читать на карте» открываются здесь.</p>
+ if(!$('opn').dataset.init){$('opn').dataset.init=1;$('opn').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Мнения градозащитников</h2><button class="rst" id="opnx">Закрыть</button></div><p class="lbl2">${NOTE} Нажмите «Читать на карте», чтобы открыть текст. У репостов без авторского комментария есть краткое содержание и ссылка на источник.</p>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0"><label>Автор <select id="opa"><option value="">все</option>${au.map(a=>`<option>${esc(a)}</option>`).join('')}</select></label><label>Тема <select id="opt"><option value="">все</option>${tp.map(a=>`<option value="${esc(a)}">${esc(TOPIC_RU[a]||a)}</option>`).join('')}</select></label><label>С даты <input type="date" id="opd" min="${ds[0]||''}" max="${ds[ds.length-1]||''}"></label></div><div id="opl"></div>`;
  const up=()=>{const a=$('opa').value,t=$('opt').value,f=$('opd').value;const l=P.filter(o=>(!a||o.a===a)&&(!t||o.t===t)&&(!f||(o.d||'')>=f));$('opl').innerHTML=(l.length?l.map(o=>postHtml(o)).join(''):'<p class="lbl2">Ничего не найдено.</p>')+`<p class="lbl2">Показано ${l.length} из ${P.length}.</p>`};
  ['opa','opt','opd'].forEach(i=>$(i).onchange=up);$('opnx').onclick=()=>{writeLocation();$('opn').style.display='none';$('cdc').style.display='none'};up()}}
