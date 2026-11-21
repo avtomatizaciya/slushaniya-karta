@@ -44,6 +44,7 @@ function heritageBlock(id) {
  <ul class="heritage-list">${rows.slice(0,6).map(heritageRow).join('')}</ul>${more}</details>`;
 }
 const heritageLayer = L.layerGroup();
+m.createPane('heritagePoints').style.zIndex=430;
 const heritageGroups = new Map();
 for (const row of heritage.records) if (row.point) {
  const key = row.point.join(',');
@@ -54,14 +55,16 @@ function toggleHeritage() {
  $('heritageLegend').hidden=!$('heritageLayer').checked;
  if (!$('heritageLayer').checked) {m.removeLayer(heritageLayer);return}
  if (!heritageLayer.getLayers().length) for (const rows of heritageGroups.values()) {
-  L.circleMarker(rows[0].point,{radius:6,color:'#fff',weight:2,fillColor:'#006c59',fillOpacity:1})
+  L.circleMarker(rows[0].point,{pane:'heritagePoints',radius:6,color:'#fff',weight:2,fillColor:'#006c59',fillOpacity:1})
    .bindPopup(()=>`<strong>Наследие · точка по адресу здания</strong><ul class="heritage-list">${rows.map(heritageRow).join('')}</ul>`,
               {maxHeight:250,maxWidth:300}).addTo(heritageLayer);
  }
  heritageLayer.addTo(m);
 }
-$('heritageLayer').onchange=toggleHeritage;
-$('heritageLayerCount').textContent=heritage.records.filter(r=>r.point).length;
+$('heritageLayer').onchange=()=>{
+ toggleHeritage();
+ if ($('heritageLayer').checked && innerWidth<=940) setPanel('pm');
+};
 const heritageSearch = heritage.records.map(r=>normalizeHeritage([r.name,r.address,r.ensemble||'',r.status].join(' ')));
 let heritageLimit=25;
 function showHeritageResults() {

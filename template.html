@@ -103,13 +103,17 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
  .filter-foot button{font-size:13px}
 }
 .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:8px}
-button.kpi{display:flex;align-items:center;gap:7px;min-height:42px;text-align:left;padding:5px 8px;font:inherit;color:var(--ink);background:white;cursor:pointer}
+#metricTiles{display:contents}
+button.kpi,.heritage-toggle{display:flex;align-items:center;gap:7px;min-height:42px;text-align:left;padding:5px 8px;font:inherit;color:var(--ink);background:white;cursor:pointer}
 button.kpi b{font-size:17px;min-width:2ch;color:#3932a3}button.kpi span{color:var(--ink);font-size:12px;line-height:1.2}
 button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#f0efff}button.kpi:focus-visible{outline:2px solid var(--a)}
+.heritage-toggle input{flex:none;accent-color:#006c59}.heritage-toggle span{color:var(--ink);font-size:12px;line-height:1.2}
+.heritage-toggle:hover,.heritage-toggle:has(input:checked){border-color:#30796b;background:#e7f6ee}
+.heritage-toggle:has(input:focus-visible){outline:2px solid var(--a)}
 .metric-note{padding:0 10px 2px;font-size:12px;color:var(--mut)}.metric-note summary{cursor:pointer}.metric-note p{margin:4px 0}.breakdown{display:flex;align-items:center;gap:8px;padding:6px 9px;color:var(--mut);font-weight:600}
 .breakdown select{min-width:0;flex:1;border:1px solid var(--line);background:white;color:var(--ink);font:inherit;border-radius:6px;padding:5px}
 #charts .chart{padding-top:6px}#charts .bar2{min-height:26px}
-@media(max-width:940px){button.kpi{min-height:44px}.breakdown select{min-height:44px}#charts .bar2{min-height:36px}}
+@media(max-width:940px){button.kpi,.heritage-toggle{min-height:44px}.breakdown select{min-height:44px}#charts .bar2{min-height:36px}}
 #opn>div:first-child{position:sticky;top:0;background:var(--card);padding:4px 0;z-index:1}#opn .po{scroll-margin-top:52px}
 .op-read summary{cursor:pointer;color:#4338a4;font-weight:600;padding:7px 0}
 .op-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
@@ -138,7 +142,6 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 <select id="fy" aria-label="Год"><option value="">Все годы</option></select>
 <select id="fw" aria-label="Срок приёма замечаний"><option value="">Любой срок</option><option value="now">Идут сейчас</option><option value="7">За 7 дней</option><option value="30">За 30 дней</option><option value="90">За 90 дней</option><option value="year">Этот год</option></select>
 <label class="cb" title="Слушания, где были замечания жителей"><input type="checkbox" id="fr"> <span>Были замечания жителей</span></label><label class="cb" title="Организатор рекомендовал отказать"><input type="checkbox" id="fo"> <span>Рекомендован отказ</span></label><label class="cb" title="Меняют вид разрешённого использования участка"><input type="checkbox" id="fu"> <span>Меняют вид использования</span></label><label class="cb" title="Слушания, о которых есть публичные посты градозащитников"><input type="checkbox" id="fm"> <span>Только слушания с мнениями градозащитников</span></label><label class="cb"><input type="checkbox" id="fh"> <span>Есть ОКН на улицах обсуждения</span></label><button class="lnk" id="heritageOpen">Культурное наследие и экспертизы</button><button class="lnk" id="ctlb">Контроль</button><button class="lnk" id="opnb">Мнения</button><button class="lnk" id="cdcb">Городские документы</button><button class="lnk" id="csv">CSV</button><a class="lnk" id="fbk" href="https://t.me/slushaniya_yaroslavl_bot?start=fb_map" target="_blank" rel="noopener">Сообщить об ошибке</a>
- <label class="cb"><input type="checkbox" id="heritageLayer"> <span>Показать ОКН на карте · по адресам (<span id="heritageLayerCount"></span>)</span></label>
  <div class="layer-settings"><label title="Карта функциональных зон генплана; клик по зоне - описание"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:60px" aria-label="Прозрачность слоя генплана">
 </div></div>
  <div class="filter-foot"><button class="lnk" id="rs">Сбросить всё</button><button class="b blue" id="applyFilters">Показать результаты</button></div>
@@ -150,7 +153,7 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 <p><label for="heritageSearch">Поиск по названию, улице или статусу</label></p><input type="search" id="heritageSearch" placeholder="Например, Масленникова"><p id="heritageCount" role="status"></p>
 <ul class="heritage-list" id="heritageResults"></ul><button type="button" id="heritageMore" class="lnk">Ещё 25 записей</button></div></dialog>
 <main id="main">
-<section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"></div><details class="metric-note"><summary>Как посчитаны цифры</summary><p id="metricNote"></p></details><label class="breakdown">Разбивка <select id="breakdown"></select></label><div id="charts"></div></section>
+<section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"><div id="metricTiles"></div><label class="kpi cb heritage-toggle"><input type="checkbox" id="heritageLayer"> <span>Показать ОКН на карте</span></label></div><details class="metric-note"><summary>Как посчитаны цифры</summary><p id="metricNote"></p></details><label class="breakdown">Разбивка <select id="breakdown"></select></label><div id="charts"></div></section>
 <section class="panel on" id="pm"><div id="m"></div><div class="map-tools"><button class="map-tool" id="legendToggle" aria-controls="leg" aria-expanded="false">Условные знаки</button><button class="map-tool" id="opinionsToggle" aria-controls="strip" aria-expanded="false">Мнения</button></div><div id="strip" role="group" aria-label="Мнения авторов" title="Записи со страниц авторов ВКонтакте. У репостов указан источник."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
 <section class="panel" id="pl" tabindex="0" aria-label="Список слушаний и карточка"><div id="listv"><div class="lh"><b id="lc"></b><button class="lnk" id="shareList">Поделиться подборкой</button><select id="so" aria-label="Сортировка списка"><option value="end">по дате</option><option value="remarks">по замечаниям</option></select></div><div id="list"></div></div><div id="card" style="display:none"></div></section>
 </main>
@@ -276,7 +279,7 @@ function kpis() {
  const reports=scope.filter(d=>!d.arch && d.has_result);
  const unknown=reports.filter(d=>d.rem==null).length;
  $('metricNote').textContent=`Цифры учитывают район и остальные фильтры. Выберите показатель, чтобы увидеть его записи. Замечания, участие жителей и рекомендации определены по заключениям. Заключений в выборке: ${reports.length}. Наличие замечаний не распознано в ${unknown}. Городские документы посчитаны отдельно.`;
- $('kpis').innerHTML=metrics.map(metric=>{
+ $('metricTiles').innerHTML=metrics.map(metric=>{
   const rows=scope.filter(metric.match);
   const value=metric.weight ? rows.reduce((total,row)=>total+metric.weight(row),0) : rows.length;
   const hint=metric.tip || ('Показать записи: '+metric.label);
@@ -433,15 +436,13 @@ $('fq').oninput=()=>{F.q=$('fq').value;openId=null;sync();if(innerWidth<=940)set
 __HERITAGE_SCRIPT__
 $('fh').onchange=()=>{F.heritage=Number($('fh').checked);sync()};
 const filterDialog=$('filterDialog');
-let layerWasVisible=false;
-$('ft').onclick=()=>{layerWasVisible=$('heritageLayer').checked;filterDialog.showModal()};
+$('ft').onclick=()=>filterDialog.showModal();
 $('filterClose').onclick=()=>filterDialog.close();
 $('applyFilters').onclick=()=>{
  filterDialog.close();
  closeCard();
- const mapRequested=$('heritageLayer').checked && !layerWasVisible;
- if(innerWidth<=940) setPanel(mapRequested?'pm':'pl');
- if(!mapRequested) $('pl').focus();
+ if(innerWidth<=940) setPanel('pl');
+ $('pl').focus();
 };
 filterDialog.addEventListener('click',e=>{
  if(e.target.closest('#ctlb,#opnb,#cdcb')) filterDialog.close();
