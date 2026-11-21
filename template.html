@@ -321,11 +321,11 @@ $('charts').onclick=e=>{const b=e.target.closest('[data-d]');if(b){tog(b.dataset
 // ---------- список и карточка
 let openId=null;
 function renderRight(){if(openId!=null){$('listv').style.display='none';$('card').style.display='block';card(D.find(x=>x.id===openId))}else{$('card').style.display='none';$('listv').style.display='block';list(flt())}}
-function list(l){const k=$('so').value;const L2=[...l].sort((a,b)=>k==='remarks'?b.remarks-a.remarks:(b.end||'').localeCompare(a.end||''));$('lc').textContent=`Записей: ${l.length}`;
+function list(l){const k=$('so').value,date=d=>d.project?d.start:(d.end||'');const L2=[...l].sort((a,b)=>k==='remarks'?b.remarks-a.remarks:date(b).localeCompare(date(a)));$('lc').textContent=`Записей: ${l.length}`;
  $('list').innerHTML=L2.map(d=>`<div class="it" data-id="${d.id}" tabindex="0" role="button"><div class="t">${esc(d.plain)}</div><div class="mt">${esc(d.district||'район не указан')} · ${stat(d).short}</div>`+
  `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замеч.</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.arch&&d.citywide?'<span class="chip">касается всего города</span>':d.lat==null?'<span class="chip">нет на карте</span>':'')+opB(d.id)+`</div>`).join('')||'<p style="padding:12px;color:var(--mut)">Ничего не найдено</p>'}
 const dleft=d=>Math.round((Date.parse(d.end)-Date.parse(todayS))/864e5);
-function stat(d){if(d.arch)return{short:'постановление от '+fmt(d.start),long:'Постановление о назначении слушаний от '+fmt(d.start)+'.',open:false};if(!d.end)return{short:'срок не указан',long:'Срок приёма замечаний не указан.',open:false};const n=dleft(d);
+function stat(d){if(d.project)return{short:'утверждён '+fmt(d.start),open:false};if(d.arch)return{short:'постановление от '+fmt(d.start),long:'Постановление о назначении слушаний от '+fmt(d.start)+'.',open:false};if(!d.end)return{short:'срок не указан',long:'Срок приёма замечаний не указан.',open:false};const n=dleft(d);
  if(n<0)return{short:'завершено '+fmt(d.end),long:`Приём замечаний завершён ${fmt(d.end)}.`,open:false};
  if(n===0)return{short:'последний день',long:`Сегодня последний день приёма замечаний (${fmt(d.end)}).`,open:true};
  return{short:`до ${fmt(d.end)} (${n} дн.)`,long:`Приём замечаний до ${fmt(d.end)}, осталось ${n} дн.`,open:true}}
@@ -365,7 +365,30 @@ function outcome(d) {
  ${d.has_result ? '<p class="lbl2">Автоматический разбор заключения организатора.'+(d.decision?'':' Окончательное решение проверяйте по отдельному акту мэрии.')+'</p>' : ''}
  <a href="${esc(report ? report.url : d.url)}" target="_blank" rel="noopener">${report ? 'Открыть заключение' : 'Открыть дело на портале мэрии'}</a></div>`;
 }
-function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]||X.kinds.other,docs=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>'),ops=X.opinions.filter(o=>o.event_id===d.id);
+function decisionBlock(decision){
+ if(!decision)return '';
+ return `<section class="outcome project-decision"><h3>Решение мэрии</h3>
+ <p><strong>${esc(decision.status)}</strong></p>
+ ${decision.context ? `<p>${esc(decision.context)}</p>` : ''}
+ ${decision.review ? `<p>${esc(decision.review)}</p>` : ''}
+ ${decision.related ? `<p><a href="?id=${decision.related.id}">${esc(decision.related.name)}</a></p>` : ''}
+ <ul class="lbl2l">${decision.sources.map(s=>`<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join('')}</ul></section>`;
+}
+function boundarySources(boundary){
+ if(!boundary)return '';
+ return `<p class="lbl2 boundary-sources">${esc(boundary.precision)}<br>${boundary.sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`).join(' · ')}</p>`;
+}
+function cardProject(d){
+ $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button><button class="lnk" id="cm">На карте</button></div><div class="cd">
+ <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span></div>
+ ${decisionBlock(d.decision)}
+ <p class="lbl2">${esc(d.how)}</p>${boundarySources(d.boundary)}
+ ${unescoBlock(d.id)}${protectionBlock(d.id)}
+ ${d.archive?`<p><a href="${esc(d.archive)}" target="_blank" rel="noopener">Архив обсуждений мэрии</a></p>`:''}</div>`;
+ $('cb').onclick=closeCard;
+ $('cm').onclick=()=>focusOn(d.id);
+}
+function card(d){if(d.project)return cardProject(d);if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]||X.kinds.other,docs=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>'),ops=X.opinions.filter(o=>o.event_id===d.id);
  const when=d.meet?`<b>Встреча:</b> ${esc(d.meet)}<br>`:'',expo=d.expo?`<b>Экспозиция (из протокола):</b> ${esc(d.expo)}<br>`:'';
  const facts=[['Что меняют',change(d)?`${d.was?'сейчас: '+esc(d.was)+'; ':''}хотят: «${esc(d.want||'-')}»`:null],['Суть проекта (из документов)',d.purpose?more(d.purpose):null],['Адрес / участок',d.addr?esc(d.addr):null],['Кадастровый номер',d.cad?esc(d.cad):null],['Площадь',d.area?d.area+' м²':null],['Зона ПЗЗ',d.zone?esc(d.zone)+(d.zone_name?' ('+esc(d.zone_name)+')':''):null],['Зоны генплана на этой территории',d.gpz?d.gpz.map(z=>esc(z[0])+' '+z[1]+'%').join('; ')+' <span class="lbl2">(приблизительно)</span>':null]].filter(f=>f[1]);
  const T=templ(d);
@@ -373,18 +396,13 @@ function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]
  <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip ${st.open?'ok':''}">${st.open?'идёт приём замечаний':d.end?'завершено':'срок не указан'}</span>${d.rec==='отказ'?'<span class="chip bad">рекомендован отказ</span>':''}</div>
  <p class="big ${st.open?'ok2':''}">${esc(st.long)}</p>
  ${!st.open && (d.end || d.has_result) ? outcome(d) : ''}
- ${d.decision ? `<section class="outcome project-decision"><h3>Решение мэрии</h3>
- <p><strong>${esc(d.decision.status)}</strong></p>
- ${d.decision.context ? `<p>${esc(d.decision.context)}</p>` : ''}
- ${d.decision.review ? `<p>${esc(d.decision.review)}</p>` : ''}
- ${d.decision.related ? `<p><a href="?id=${d.decision.related.id}">${esc(d.decision.related.name)}</a></p>` : ''}
- <ul class="lbl2l">${d.decision.sources.map(s=>`<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join('')}</ul></section>` : ''}
+ ${decisionBlock(d.decision)}
  ${st.open ? `<p>${when}${expo}</p><div class="btns"><button class="b blue" id="bs" aria-expanded="false" aria-controls="how">Как подать замечание</button><button class="b" id="bc">Добавить в календарь</button></div>
  <div id="how" hidden class="box"><a href="${esc(d.url)}" target="_blank" rel="noopener">Открыть объявление мэрии и проверить порядок подачи</a><p>${esc(X.tail)}</p><a href="https://www.gosuslugi.ru/" target="_blank" rel="noopener">Госуслуги</a></div>` : (!d.end ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">Уточнить срок на портале мэрии</a></p>` : '')}
  <p><a href="${BOT}?start=ev_${d.id}" target="_blank" rel="noopener">Следить за этим слушанием</a></p>
  <h3>Что предлагают</h3><p>${esc(d.expl)}</p>${facts.length?'<table class="ft">'+facts.map(f=>`<tr><td>${f[0]}</td><td>${f[1]}</td></tr>`).join('')+'</table>':''}
  <p class="lbl2">Место на карте: ${esc(d.how||'не определено')}${d.approx?'. Границы приблизительные.':''}</p>
- ${d.boundary?`<p class="lbl2 boundary-sources">${esc(d.boundary.precision)}<br>${d.boundary.sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`).join(' · ')}</p>`:''}
+ ${boundarySources(d.boundary)}
  ${unescoBlock(d.id)}
  ${protectionBlock(d.id)}
  <details><summary>Справка о процедуре и возможных последствиях</summary><div class="pm"><div><b>Возможные плюсы</b><ul>${K.pros.map(x=>'<li>'+esc(x)+'</li>').join('')||'<li>-</li>'}</ul></div><div><b>На что обратить внимание</b><ul>${K.risks.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div></div><p class="lbl2">Общие сведения для этого типа обсуждений.</p></details>
@@ -506,7 +524,7 @@ function opn(){const P=X.posts||[],au=[...new Set(P.map(o=>o.a))],tp=[...new Set
  const up=()=>{const a=$('opa').value,t=$('opt').value,f=$('opd').value;const l=P.filter(o=>(!a||o.a===a)&&(!t||o.t===t)&&(!f||(o.d||'')>=f));$('opl').innerHTML=(l.length?l.map(o=>postHtml(o)).join(''):'<p class="lbl2">Ничего не найдено.</p>')+`<p class="lbl2">Показано ${l.length} из ${P.length}.</p>`};
  ['opa','opt','opd'].forEach(i=>$(i).onchange=up);$('opnx').onclick=()=>{writeLocation();$('opn').style.display='none';$('cdc').style.display='none'};up()}}
 function cdc(){const A=D.filter(d=>d.arch),secs=[...new Set(A.map(d=>d.sec))];
- $('cdc').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Городские документы</h2><button class="rst" id="cdcx">Закрыть</button></div><p class="lbl2">Генеральный план, правила землепользования и застройки (ПЗЗ), смена вида использования: записи архивных разделов портала мэрии за 2009-2025. Дата в списке - дата постановления о назначении слушаний, а не дата самих слушаний. Итоги автоматически не разобраны, документы по ссылкам.</p>`+secs.map(s=>`<h3>${esc(s)} (${A.filter(d=>d.sec===s).length})</h3>`+A.filter(d=>d.sec===s).sort((a,b)=>(b.start||'').localeCompare(a.start||'')).map(d=>`<div class="pr" data-open="${d.id}" tabindex="0" role="button"><b>${esc(d.plain)}</b><br><span class="lbl2">постановление от ${fmt(d.start)} · ${d.citywide?'касается всего города':'место приблизительно'} ${opB(d.id)}</span></div>`).join('')).join('');
+ $('cdc').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Городские документы</h2><button class="rst" id="cdcx">Закрыть</button></div><p class="lbl2">Архивные записи и проекты из реестра актов. В списке указаны даты постановлений.</p>`+secs.map(s=>`<h3>${esc(s)} (${A.filter(d=>d.sec===s).length})</h3>`+A.filter(d=>d.sec===s).sort((a,b)=>(b.start||'').localeCompare(a.start||'')).map(d=>`<div class="pr" data-open="${d.id}" tabindex="0" role="button"><b>${esc(d.plain)}</b><br><span class="lbl2">постановление от ${fmt(d.start)} · ${d.project?esc(d.procedure):d.citywide?'касается всего города':'место приблизительно'} ${opB(d.id)}</span></div>`).join('')).join('');
  $('cdcx').onclick=()=>{$('cdc').style.display='none'};
  $('cdc').onclick=e=>{const p=e.target.closest('[data-open]');if(p){$('cdc').style.display='none';openCard(+p.dataset.open,true);const d=D.find(x=>x.id===+p.dataset.open);if(d.lat!=null&&innerWidth>940)focusOn(d.id)}}}
 function strip(){const P=X.posts||[],by={};P.forEach(o=>(by[o.a]=by[o.a]||[]).push(o));const A=Object.keys(by);
