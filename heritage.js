@@ -65,6 +65,39 @@ $('heritageLayer').onchange=()=>{
  toggleHeritage();
  if ($('heritageLayer').checked && innerWidth<=940) setPanel('pm');
 };
+
+const unesco = X.unesco;
+const unescoGroup = L.featureGroup();
+m.createPane('unescoZones').style.zIndex=390;
+for (const [key, color] of [['buffer','#b65b17'],['core','#783fac']]) {
+ L.geoJSON(unesco.zones[key].geometry,{pane:'unescoZones',interactive:false,
+  style:{color,fillColor:color,weight:2,fillOpacity:0.16,dashArray:key==='buffer'?'6 4':null}
+ }).addTo(unescoGroup);
+}
+$('unescoSource').href=unesco.geoportal;
+$('unescoLayer').onchange=()=>{
+ const visible=$('unescoLayer').checked;
+ $('unescoLegend').hidden=!visible;
+ if (!visible) {m.removeLayer(unescoGroup);return}
+ if (innerWidth<=940) setPanel('pm');
+ m.invalidateSize({pan:false});
+ unescoGroup.addTo(m);
+ const bounds=unescoGroup.getBounds();
+ if (m.getZoom()<13 || !m.getBounds().intersects(bounds)) {
+  touched=true;
+  m.fitBounds(bounds.pad(.12),{maxZoom:14,animate:false});
+ }
+};
+function unescoBlock(id) {
+ const match=unesco.matches[id];
+ if (!match) return '';
+ const status={inside:'целиком',partial:'частично',edge:'у границы, нужно уточнить по документам'};
+ const lines=Object.entries(match).map(([key,value])=>`<p><strong>${esc(unesco.zones[key].name)}</strong> · ${status[value]}</p>`).join('');
+ return `<section class="box unesco-card"><h3>Границы ЮНЕСКО</h3>${lines}<p class="lbl2">Сопоставление по контурам дел и областного геопортала.</p>
+ <p><a href="${esc(unesco.geoportal)}" target="_blank" rel="noopener">Слои геопортала</a> ·
+ <a href="${esc(unesco.unesco)}" target="_blank" rel="noopener">Карта ЮНЕСКО</a></p></section>`;
+}
+
 const heritageSearch = heritage.records.map(r=>normalizeHeritage([r.name,r.address,r.ensemble||'',r.status].join(' ')));
 let heritageLimit=25;
 function showHeritageResults() {
