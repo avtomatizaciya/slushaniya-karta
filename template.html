@@ -115,6 +115,12 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 .op-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
 .op-read[open] .read-label,.op-read:not([open]) .fold-label,.post-copy:has(.op-read[open])>.excerpt{display:none}
 .opp{max-height:min(45dvh,330px);overflow:auto;overscroll-behavior:contain}
+#heritageDialog{width:min(570px,94vw);max-height:86dvh;padding:0;border:1px solid var(--line);border-radius:14px;color:var(--ink)}
+#heritageDialog[open]{display:flex;flex-direction:column}#heritageDialog::backdrop{background:#102e4666}
+.heritage-body{overflow:auto;padding:12px 16px;overflow-wrap:anywhere}.heritage-body input{width:100%;box-sizing:border-box;font:inherit;padding:10px}.heritage-body p{margin:8px 0}
+.heritage-list{list-style:none;padding:0;margin:0}.heritage-list li{padding:8px 0;border-bottom:1px solid var(--line)}
+.heritage-block{border-left:3px solid #006c59;padding:8px 12px;margin:12px 0;background:#f1f8f6}.heritage-block>summary{font-weight:650;cursor:pointer}
+.heritage-list summary,.heritage-body summary{cursor:pointer}.heritage-list small{color:#37574d}
 </style></head><body>
 <header role="banner"><h1>Слушания Ярославля</h1><small>Публичные обсуждения мэрии, 2009-2026</small><a class="mkd" href="https://yar.city/maps/neighbors/" target="_blank" rel="noopener" title="Карта сообществ соседей по домам (сайт yar.city)">Карта домов МКД<small>сообщества соседей по домам</small></a><a class="bot" href="https://t.me/slushaniya_yaroslavl_bot" target="_blank" rel="noopener">Подписаться в боте</a></header>
 <div id="now" role="status"></div>
@@ -131,11 +137,18 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
  <div class="filter-body"><select id="fk" aria-label="Тип вопроса"><option value="">Все типы вопросов</option></select>
 <select id="fy" aria-label="Год"><option value="">Все годы</option></select>
 <select id="fw" aria-label="Срок приёма замечаний"><option value="">Любой срок</option><option value="now">Идут сейчас</option><option value="7">За 7 дней</option><option value="30">За 30 дней</option><option value="90">За 90 дней</option><option value="year">Этот год</option></select>
-<label class="cb" title="Слушания, где были замечания жителей"><input type="checkbox" id="fr"> <span>Были замечания жителей</span></label><label class="cb" title="Организатор рекомендовал отказать"><input type="checkbox" id="fo"> <span>Рекомендован отказ</span></label><label class="cb" title="Меняют вид разрешённого использования участка"><input type="checkbox" id="fu"> <span>Меняют вид использования</span></label><label class="cb" title="Слушания, о которых есть публичные посты градозащитников"><input type="checkbox" id="fm"> <span>Только слушания с мнениями градозащитников</span></label><button class="lnk" id="ctlb">Контроль</button><button class="lnk" id="opnb">Мнения</button><button class="lnk" id="cdcb">Городские документы</button><button class="lnk" id="csv">CSV</button><a class="lnk" id="fbk" href="https://t.me/slushaniya_yaroslavl_bot?start=fb_map" target="_blank" rel="noopener">Сообщить об ошибке</a>
+<label class="cb" title="Слушания, где были замечания жителей"><input type="checkbox" id="fr"> <span>Были замечания жителей</span></label><label class="cb" title="Организатор рекомендовал отказать"><input type="checkbox" id="fo"> <span>Рекомендован отказ</span></label><label class="cb" title="Меняют вид разрешённого использования участка"><input type="checkbox" id="fu"> <span>Меняют вид использования</span></label><label class="cb" title="Слушания, о которых есть публичные посты градозащитников"><input type="checkbox" id="fm"> <span>Только слушания с мнениями градозащитников</span></label><label class="cb"><input type="checkbox" id="fh"> <span>Есть ОКН на улицах обсуждения</span></label><button class="lnk" id="heritageOpen">Культурное наследие и экспертизы</button><button class="lnk" id="ctlb">Контроль</button><button class="lnk" id="opnb">Мнения</button><button class="lnk" id="cdcb">Городские документы</button><button class="lnk" id="csv">CSV</button><a class="lnk" id="fbk" href="https://t.me/slushaniya_yaroslavl_bot?start=fb_map" target="_blank" rel="noopener">Сообщить об ошибке</a>
+ <label class="cb"><input type="checkbox" id="heritageLayer"> <span>Показать ОКН на карте · по адресам (<span id="heritageLayerCount"></span>)</span></label>
  <div class="layer-settings"><label title="Карта функциональных зон генплана; клик по зоне - описание"><input type="checkbox" id="fg"> Генплан</label><input type="range" id="fgo" min="20" max="90" value="60" style="width:60px" aria-label="Прозрачность слоя генплана">
 </div></div>
  <div class="filter-foot"><button class="lnk" id="rs">Сбросить всё</button><button class="b blue" id="applyFilters">Показать результаты</button></div>
 </dialog>
+<dialog id="heritageDialog" aria-labelledby="heritageTitle"><div class="filter-head"><h2 id="heritageTitle">Культурное наследие Ярославля</h2><button class="lnk" id="heritageClose">Закрыть</button></div>
+<div class="heritage-body"><p>Перечни областной службы охраны памятников. Источники проверены <span id="heritageChecked"></span>. На карте отмечены объекты, для которых удалось однозначно найти здание по адресу.</p>
+<details><summary>Обсуждения историко-культурных экспертиз</summary><p>Отдельная процедура областной службы. Сроки и материалы приведены по её объявлениям.</p><ul id="heritageReviews"></ul>
+<a href="https://portal.yarregion.ru/depts-dookn/doc/section.php?SECTION_CODE=gosudarstvennaya-istoriko-kulturnaya-ekspertiza" target="_blank" rel="noopener">Все публикации и новые сроки на портале области</a></details>
+<p><label for="heritageSearch">Поиск по названию, улице или статусу</label></p><input type="search" id="heritageSearch" placeholder="Например, Масленникова"><p id="heritageCount" role="status"></p>
+<ul class="heritage-list" id="heritageResults"></ul><button type="button" id="heritageMore" class="lnk">Ещё 25 записей</button></div></dialog>
 <main id="main">
 <section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"></div><details class="metric-note"><summary>Как посчитаны цифры</summary><p id="metricNote"></p></details><label class="breakdown">Разбивка <select id="breakdown"></select></label><div id="charts"></div></section>
 <section class="panel on" id="pm"><div id="m"></div><div class="map-tools"><button class="map-tool" id="legendToggle" aria-controls="leg" aria-expanded="false">Условные знаки</button><button class="map-tool" id="opinionsToggle" aria-controls="strip" aria-expanded="false">Мнения</button></div><div id="strip" role="group" aria-label="Мнения авторов" title="Записи со страниц авторов ВКонтакте. У репостов указан источник."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div></section>
@@ -165,7 +178,7 @@ const DIMS=[
  {k:'init',t:'Инициатор (где указан в материалах)',get:d=>d.arch?null:(d.init||'не указан'),top:5},
  {k:'want',t:'Во что переводят участки',get:d=>d.want||null,top:6},
  {k:'gp',t:'Зона генплана в месте слушания (приблизительно)',get:d=>d.gp||null,top:6}];
-const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0,opn:0,sec:'',metric:''};const opN=id=>(X.posts||[]).filter(o=>(o.h||[]).includes(id)).length,opB=id=>opN(id)?`<span class="chip" style="background:#ede9fe;color:#4c1d95">есть мнения (${opN(id)})</span>`:'';const OPS=new Set((X.posts||[]).flatMap(o=>o.h||[]));
+const F={district:'',kind:'',year:'',init:'',want:'',gp:'',win:'',q:'',rem:0,rej:0,chg:0,opn:0,heritage:0,sec:'',metric:''};const opN=id=>(X.posts||[]).filter(o=>(o.h||[]).includes(id)).length,opB=id=>opN(id)?`<span class="chip" style="background:#ede9fe;color:#4c1d95">есть мнения (${opN(id)})</span>`:'';const OPS=new Set((X.posts||[]).flatMap(o=>o.h||[]));
 const dim=k=>DIMS.find(x=>x.k===k);
 const metrics=[
  {key:'hearings',label:'Обсуждения',match:d=>!d.arch},
@@ -181,7 +194,7 @@ function flt(except){const q=F.q.trim().toLowerCase();
  const metric=except==='metric'?null:metricByKey.get(F.metric);
  return D.filter(d=>{if(metric && !metric.match(d))return false;for(const x of DIMS){if(x.k!==except&&F[x.k]&&x.get(d)!==F[x.k])return false}
   if(F.win&&!(F.win==='now'?(d.end||'')>=todayS:F.win==='year'?(d.start||'').startsWith(todayS.slice(0,4)):(d.end||'')>=back(+F.win)))return false;
-  if(F.rem&&!d.remarks)return false;if(F.rej&&d.rec!=='отказ')return false;if(F.chg&&!change(d))return false;if(F.opn&&!OPS.has(d.id))return false;
+  if(F.rem&&!d.remarks)return false;if(F.rej&&d.rec!=='отказ')return false;if(F.chg&&!change(d))return false;if(F.opn&&!OPS.has(d.id))return false;if(F.heritage&&!heritageCases.has(d.id))return false;
   if(q&&!(d.plain+' '+d.title+' '+(d.addr||'')+' '+(d.init||'')).toLowerCase().includes(q))return false;return true})}
 // ---------- карта
 const CITY=[[57.5257,39.7036],[57.7753,40.0031]];
@@ -251,7 +264,7 @@ $('fgo').hidden=!$('fg').checked;
 $('fg').onchange=()=>{$('fgo').hidden=!$('fg').checked;$('fg').checked?gpl.addTo(m):m.removeLayer(gpl);$('leg2').style.display=$('fg').checked?'block':'none'};
 $('fgo').oninput=()=>gpl.setOpacity($('fgo').value/100);
 const z15=()=>$('m').classList.toggle('z15',m.getZoom()>=15);m.on('zoomend',z15);z15();
-$('leg').innerHTML=Object.entries(COL).map(([k,v])=>`<i style="background:${v}"></i>${k}`).join('<br>')+'<br><small>Рамка/контур - затронутая территория. Красная - отказ. Пунктир - место неточное.</small>';
+$('leg').innerHTML=Object.entries(COL).map(([k,v])=>`<i style="background:${v}"></i>${k}`).join('<br>')+'<br><span id="heritageLegend" hidden><i style="background:#006c59;border-radius:100%"></i>ОКН по адресу здания<br></span><small>Рамка/контур - затронутая территория. Красная - отказ. Пунктир - место неточное.</small>';
 function legend2(){$('leg2').innerHTML='<b>Генплан: зоны</b> <small>(клик - фильтр)</small>'+GL.map(l=>`<span class="leg2i${F.gp===l.name?' sel':''}" data-gp="${esc(l.name)}"><i style="background:rgb(${l.rgb})"></i>${esc(l.name)}</span>`).join('')+'<small>Источник: карта функциональных зон генплана, сайт мэрии. Привязка приблизительная.</small>'}
 $('leg2').onclick=e=>{const s=e.target.closest('[data-gp]');if(s)tog('gp',s.dataset.gp)};
 // ---------- цифры
@@ -325,7 +338,7 @@ function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_bl
  <p class="big">Постановление о назначении слушаний от ${fmt(d.start)}.</p><p class="lbl2">Это дата постановления, а не дата самих слушаний: дату проведения смотрите в постановлении и регламенте.</p>
  <h3>Что это</h3><p>${esc(d.expl)}</p>
  <p class="lbl2">${d.citywide?'Касается всего города: на карте точки нет, запись видна в списке и в блоке «Городские документы».':'Место на карте: '+esc(d.how||'не определено')+'. Границы неточные.'}</p>
- ${posts(d.id)}<h3>Итоги</h3><p>Итоги этого обсуждения не разобраны автоматически. Смотрите протокол и заключение в документах ниже.</p>
+ ${heritageBlock(d.id)}${posts(d.id)}<h3>Итоги</h3><p>Итоги этого обсуждения не разобраны автоматически. Смотрите протокол и заключение в документах ниже.</p>
  <h3>Документы</h3><p>${dl||'<span class="lbl2">Документы не приложены.</span>'}</p>
  <p><a class="lnk" href="${esc(d.url)}" target="_blank" rel="noopener">Страница раздела на портале мэрии</a></p>
  <details><summary>Официальное название</summary><p>${esc(d.title)}</p></details><p><a class="lnk" href="${BOT}?start=fb_${d.id}" target="_blank" rel="noopener">Нашли ошибку? Сообщить по записи №${d.id}</a></p></div>`;
@@ -353,7 +366,7 @@ function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]
  <details><summary>Справка о процедуре и возможных последствиях</summary><div class="pm"><div><b>Возможные плюсы</b><ul>${K.pros.map(x=>'<li>'+esc(x)+'</li>').join('')||'<li>-</li>'}</ul></div><div><b>На что обратить внимание</b><ul>${K.risks.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div></div><p class="lbl2">Общие сведения для этого типа обсуждений.</p></details>
  ${d.near?`<h3>Что рядом</h3><table class="ft"><tr><td></td><td><b>до 500 м</b></td><td><b>до 1000 м</b></td></tr>${[['school','Школы'],['kg','Детские сады'],['clinic','Поликлиники'],['pharmacy','Аптеки'],['park','Парки']].map(([k,n])=>`<tr><td>${n}</td><td>${d.near[k][0]}</td><td>${d.near[k][1]}</td></tr>`).join('')}</table><p class="lbl2">От центра территории слушания. По данным 2ГИС и OSM на дату сборки, могут быть неполные. Остановок транспорта в этих данных нет.</p>`:''}
  <h3>История места</h3>${d.prior&&d.prior.length?d.prior.map(p=>`<div class="pr"><b><button class="lnk" data-open="${p.id}" style="text-align:left;font-weight:700">${esc(p.plain)}</button></b><br><span class="lbl2">${esc(p.why)} · ${fmt(p.end)} · ${p.has_result?('замечания: '+(p.rem===true?(p.remarks||'есть'):p.rem===false?'не было':'не распознано')+'; '+(p.rec==='отказ'?'организатор рекомендовал отказ':p.rec?'организатор рекомендовал утвердить':'рекомендация не распознана')):'итог не получен'}</span> <a href="${esc(p.url)}" target="_blank" rel="noopener">портал</a></div>`).join('')+'<p class="lbl2">Совпадение по кадастровому номеру, адресу, пересечению территорий, общим улицам или заявителю-организации; частных лиц не показываем.</p>':'<p class="lbl2">Прошлых слушаний по этому месту в базе не найдено (база охватывает 2023-2026).</p>'}
- ${posts(d.id)}
+ ${heritageBlock(d.id)}${posts(d.id)}
  <h3>Что пишут по этому слушанию</h3>${ops.length?ops.map(o=>`<div class="pr"><span class="chip">${esc(o.position)}</span> ${esc(o.platform||'')} · ${esc(o.date||'')} <a href="${esc(o.url)}" target="_blank" rel="noopener">ссылка</a></div>`).join(''):'<p class="lbl2">Проверенных ссылок пока нет.</p>'}
  <details><summary>Добавить ссылку на публичный пост</summary><div class="box"><select id="op"><option>за</option><option>против</option><option>вопрос</option></select> <input id="ol" type="url" placeholder="https://ссылка-на-пост" style="width:100%;margin:4px 0"><input id="ot" placeholder="Площадка (ВК, Telegram, сайт)" style="width:60%"> <input id="od" type="date"><br><button class="b" id="oc">Скопировать предложение</button><p class="lbl2">Страница ничего не публикует и не отправляет. Скопированный текст отправьте боту: ссылка сначала будет проверена, на карте она появится только после проверки.</p></div></details>
  ${st.open?`<h3>Заготовки замечания</h3><p class="lbl2">Это шаблоны: отредактируйте и отправьте сами. Страница ничего никуда не отправляет. Для учёта замечания нужна идентификация участника (ФИО, дата рождения, адрес) по ст. 5.1 Градостроительного кодекса.</p>
@@ -370,11 +383,11 @@ function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]
  $('card').onclick=e=>{const p=e.target.closest('[data-open]');if(p)openCard(+p.dataset.open)}}
 // ---------- состояние
 function tog(k,v){F[k]=F[k]===v?'':v;sync();if(k==='district')zoomDistrict()}
-function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',{now:'Идут сейчас',year:'Этот год'}[F.win]||'За '+F.win+' дн.']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);if(F.opn)c.push(['opn','Есть мнения']);if(F.metric)c.push(['metric',metricByKey.get(F.metric).label]);
+function chips(){const c=[];DIMS.forEach(x=>{if(F[x.k])c.push([x.k,x.t.split(' (')[0]+': '+F[x.k]])});if(F.win)c.push(['win',{now:'Идут сейчас',year:'Этот год'}[F.win]||'За '+F.win+' дн.']);if(F.q)c.push(['q','«'+F.q+'»']);if(F.rem)c.push(['rem','Замечания']);if(F.rej)c.push(['rej','Отказ']);if(F.chg)c.push(['chg','Меняют вид']);if(F.heritage)c.push(['heritage','ОКН на улицах обсуждения']);if(F.opn)c.push(['opn','Есть мнения']);if(F.metric)c.push(['metric',metricByKey.get(F.metric).label]);
  $('chips').innerHTML=c.map(([k,t])=>`<button class="fc" data-x="${k}" aria-label="Снять фильтр: ${esc(t)}"><span title="${esc(t)}">${esc(t)}</span><b aria-hidden="true">×</b></button>`).join('')}
 $('chips').onclick=e=>{const c=e.target.closest('[data-x]');if(!c)return;const k=c.dataset.x;F[k]=(typeof F[k]==='number')?0:'';sync();if(k==='district')zoomDistrict()};
-function ctrls(){$('fd').value=F.district;$('fk').value=F.kind;$('fy').value=F.year;$('fw').value=F.win;$('fq').value=F.q;$('fr').checked=!!F.rem;$('fo').checked=!!F.rej;$('fu').checked=!!F.chg;$('fm').checked=!!F.opn}
-const filterKeys = {district:'fd', kind:'fk', year:'fy', win:'fw', q:'fq', rem:'fr', rej:'fo', chg:'fu', opn:'fm', sec:'sec', init:'init', want:'want', gp:'gp', metric:'metric'};
+function ctrls(){$('fd').value=F.district;$('fk').value=F.kind;$('fy').value=F.year;$('fw').value=F.win;$('fq').value=F.q;$('fr').checked=!!F.rem;$('fo').checked=!!F.rej;$('fu').checked=!!F.chg;$('fm').checked=!!F.opn;$('fh').checked=!!F.heritage}
+const filterKeys = {district:'fd', kind:'fk', year:'fy', win:'fw', q:'fq', rem:'fr', rej:'fo', chg:'fu', opn:'fm', heritage:'fh', sec:'sec', init:'init', want:'want', gp:'gp', metric:'metric'};
 function readFilters() {
  const params = new URLSearchParams(location.hash.slice(1));
  let explicit = params.has('all');
@@ -413,14 +426,18 @@ const uniq=a=>[...new Set(a)].filter(Boolean).sort();
 uniq(D.map(d=>d.district)).forEach(v=>$('fd').add(new Option(v,v)));uniq(D.map(d=>d.kind)).forEach(v=>$('fk').add(new Option(v,v)));uniq(D.map(d=>(d.start||'').slice(0,4))).reverse().forEach(v=>$('fy').add(new Option(v,v)));
 $('fd').onchange=()=>{F.district=$('fd').value;sync();zoomDistrict()};$('fk').onchange=()=>{F.kind=$('fk').value;sync()};$('fy').onchange=()=>{F.year=$('fy').value;sync()};$('fw').onchange=()=>{F.win=$('fw').value;sync()};
 $('fq').oninput=()=>{F.q=$('fq').value;openId=null;sync();if(innerWidth<=940)setPanel('pl')};$('fr').onchange=()=>{F.rem=$('fr').checked?1:0;sync()};$('fo').onchange=()=>{F.rej=$('fo').checked?1:0;sync()};$('fu').onchange=()=>{F.chg=$('fu').checked?1:0;sync()};$('fm').onchange=()=>{F.opn=$('fm').checked?1:0;sync()};
+__HERITAGE_SCRIPT__
+$('fh').onchange=()=>{F.heritage=Number($('fh').checked);sync()};
 const filterDialog=$('filterDialog');
-$('ft').onclick=()=>filterDialog.showModal();
+let layerWasVisible=false;
+$('ft').onclick=()=>{layerWasVisible=$('heritageLayer').checked;filterDialog.showModal()};
 $('filterClose').onclick=()=>filterDialog.close();
 $('applyFilters').onclick=()=>{
  filterDialog.close();
  closeCard();
- if(innerWidth<=940) setPanel('pl');
- $('pl').focus();
+ const mapRequested=$('heritageLayer').checked && !layerWasVisible;
+ if(innerWidth<=940) setPanel(mapRequested?'pm':'pl');
+ if(!mapRequested) $('pl').focus();
 };
 filterDialog.addEventListener('click',e=>{
  if(e.target.closest('#ctlb,#opnb,#cdcb')) filterDialog.close();
