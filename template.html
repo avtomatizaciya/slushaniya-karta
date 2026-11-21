@@ -110,6 +110,11 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 .breakdown select{min-width:0;flex:1;border:1px solid var(--line);background:white;color:var(--ink);font:inherit;border-radius:6px;padding:5px}
 #charts .chart{padding-top:6px}#charts .bar2{min-height:26px}
 @media(max-width:940px){button.kpi{min-height:44px}.breakdown select{min-height:44px}#charts .bar2{min-height:36px}}
+#opn>div:first-child{position:sticky;top:0;background:var(--card);padding:4px 0;z-index:1}#opn .po{scroll-margin-top:52px}
+.op-read summary{cursor:pointer;color:#4338a4;font-weight:600;padding:7px 0}
+.op-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.op-read[open] .read-label,.op-read:not([open]) .fold-label,.post-copy:has(.op-read[open])>.excerpt{display:none}
+.opp{max-height:min(45dvh,330px);overflow:auto;overscroll-behavior:contain}
 </style></head><body>
 <header role="banner"><h1>Слушания Ярославля</h1><small>Публичные обсуждения мэрии, 2009-2026</small><a class="mkd" href="https://yar.city/maps/neighbors/" target="_blank" rel="noopener" title="Карта сообществ соседей по домам (сайт yar.city)">Карта домов МКД<small>сообщества соседей по домам</small></a><a class="bot" href="https://t.me/slushaniya_yaroslavl_bot" target="_blank" rel="noopener">Подписаться в боте</a></header>
 <div id="now" role="status"></div>
@@ -203,7 +208,17 @@ function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==
 let SHOWOP=true;const APAL=['#6d28d9','#0f766e','#b45309','#be123c','#1d4ed8'],AC={};
 function acol(a){if(!AC[a])AC[a]=APAL[Object.keys(AC).length%APAL.length];return AC[a]}
 function ini(a){return a.split(/\s+/).map(w=>w[0]).join(' ').toUpperCase()}
-function opPopup(a,l){return `<div class="opp"><b>${l[0].au?`<a href="${esc(l[0].au)}" target="_blank" rel="noopener">${esc(a)}</a>`:esc(a)}</b>${l.map(o=>`<div class="lbl2" style="margin-top:6px">${esc(o.d||'')}</div><p style="margin:2px 0 6px">${esc(o.s)}</p><a class="opbtn" href="${esc(o.u)}" target="_blank" rel="noopener">Читать пост целиком в ВК</a>`).join('')}<p class="lbl2" style="margin-top:6px">Публичный пост автора ВКонтакте. Мнение принадлежит автору, не позиция проекта.</p></div>`}
+function postBody(o) {
+ const full=X.fullPosts?.[o.k];
+ const sourceLabel=full ? 'Оригинал в ВК' : 'Открыть в ВК · доступ зависит от настроек автора';
+ const source=`<a href="${esc(o.u)}" target="_blank" rel="noopener">${sourceLabel}</a>`;
+ const excerpt=`<p class="excerpt">${esc(o.s)}</p>`;
+ if(!full) return excerpt+source;
+ const linked=full.split(/(https?:\/\/[^\s<>"\[\]]+)/g).map((part,i)=>i%2
+  ? `<a href="${esc(part)}" target="_blank" rel="noopener">${esc(part)}</a>` : esc(part)).join('');
+ return `<div class="post-copy">${excerpt}<details class="op-read" data-post="${esc(o.k)}"><summary><span class="read-label">Читать на карте</span><span class="fold-label">Свернуть текст</span></summary><div class="op-text">${linked}</div></details>${source}</div>`;
+}
+function opPopup(a,l){return `<div class="opp"><b>${l[0].au?`<a href="${esc(l[0].au)}" target="_blank" rel="noopener">${esc(a)}</a>`:esc(a)}</b>${l.map(o=>`<div class="lbl2" style="margin-top:6px">${esc(o.d||'')}</div>${postBody(o)}`).join('')}<p class="lbl2" style="margin-top:6px">Публичный пост автора ВКонтакте. Мнение принадлежит автору, не позиция проекта.</p></div>`}
 function opIcons(d){const by={};(X.posts||[]).filter(o=>(o.h||[]).includes(d.id)).forEach(o=>(by[o.a]=by[o.a]||[]).push(o));
  Object.keys(by).forEach((a,i)=>{const l=by[a],c=acol(a),av=l[0].av,n=l.length;
   const ic=L.divIcon({className:'opa',iconSize:[46,46],iconAnchor:[-4-i*32,52],html:`<span class="opc" style="background:${c}">${esc(ini(a))}${av?`<img src="${esc(av)}" alt="" onerror="this.remove()">`:''}${n>1?`<i>${n}</i>`:''}</span>`});
@@ -368,6 +383,7 @@ function readFilters() {
 }
 function selectionUrl(id, forSharing=false) {
  const url = new URL(forSharing && location.protocol==='file:' ? document.querySelector('link[rel=canonical]').href : location.href);
+ url.searchParams.delete('post');
  if (id) url.searchParams.set('id', id);
  else url.searchParams.delete('id');
  const params = new URLSearchParams();
@@ -435,13 +451,13 @@ function ctl(){const a=ctlStats(flt()),all=ctlStats(D);
 
 const NOTE='Публичные посты авторов ВКонтакте. Мнения принадлежат авторам, не позиция проекта.';
 const TOPIC_RU={'слушания':'Слушания','застройка и наследие':'Застройка и наследие'};
-function postHtml(o,hide){const hs=hide?'':(o.h||[]).map(id=>{const d=D.find(x=>x.id===id);return d?`<div class="lbl2" style="margin-top:4px">Слушание: ${esc(d.plain)}</div><button class="b shb" data-show="${id}">Показать слушание</button> `:''}).join('');return `<div class="po"><div class="lbl2">${esc(o.a)} · ${esc(o.d||'')} · ${esc(TOPIC_RU[o.t]||o.t||'')}</div><p>${esc(o.s)}</p>${hs}<a href="${esc(o.u)}" target="_blank" rel="noopener">Читать в ВК</a></div>`}
+function postHtml(o,hide){const hs=hide?'':(o.h||[]).map(id=>{const d=D.find(x=>x.id===id);return d?`<div class="lbl2" style="margin-top:4px">Слушание: ${esc(d.plain)}</div><button class="b shb" data-show="${id}">Показать слушание</button> `:''}).join('');return `<div class="po"><div class="lbl2">${esc(o.a)} · ${esc(o.d||'')} · ${esc(TOPIC_RU[o.t]||o.t||'')}</div>${postBody(o)}${hs}</div>`}
 function posts(id){const l=(X.posts||[]).filter(o=>o.h&&o.h.includes(id));return l.length?`<h3>Мнения</h3>${l.map(o=>postHtml(o,1)).join('')}<p class="lbl2">${NOTE}</p>`:''}
 function opn(){const P=X.posts||[],au=[...new Set(P.map(o=>o.a))],tp=[...new Set(P.map(o=>o.t))],ds=P.map(o=>o.d).filter(Boolean).sort();
- if(!$('opn').dataset.init){$('opn').dataset.init=1;$('opn').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Мнения градозащитников</h2><button class="rst" id="opnx">Закрыть</button></div><p class="lbl2">${NOTE} Показан только краткий фрагмент, полный текст по ссылке.</p>
+ if(!$('opn').dataset.init){$('opn').dataset.init=1;$('opn').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Мнения градозащитников</h2><button class="rst" id="opnx">Закрыть</button></div><p class="lbl2">${NOTE} Записи с кнопкой «Читать на карте» открываются здесь.</p>
  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0"><label>Автор <select id="opa"><option value="">все</option>${au.map(a=>`<option>${esc(a)}</option>`).join('')}</select></label><label>Тема <select id="opt"><option value="">все</option>${tp.map(a=>`<option value="${esc(a)}">${esc(TOPIC_RU[a]||a)}</option>`).join('')}</select></label><label>С даты <input type="date" id="opd" min="${ds[0]||''}" max="${ds[ds.length-1]||''}"></label></div><div id="opl"></div>`;
  const up=()=>{const a=$('opa').value,t=$('opt').value,f=$('opd').value;const l=P.filter(o=>(!a||o.a===a)&&(!t||o.t===t)&&(!f||(o.d||'')>=f));$('opl').innerHTML=(l.length?l.map(o=>postHtml(o)).join(''):'<p class="lbl2">Ничего не найдено.</p>')+`<p class="lbl2">Показано ${l.length} из ${P.length}.</p>`};
- ['opa','opt','opd'].forEach(i=>$(i).onchange=up);$('opnx').onclick=()=>{$('opn').style.display='none';$('cdc').style.display='none'};up()}}
+ ['opa','opt','opd'].forEach(i=>$(i).onchange=up);$('opnx').onclick=()=>{writeLocation();$('opn').style.display='none';$('cdc').style.display='none'};up()}}
 function cdc(){const A=D.filter(d=>d.arch),secs=[...new Set(A.map(d=>d.sec))];
  $('cdc').innerHTML=`<div style="display:flex;gap:8px;align-items:center"><h2 style="flex:1">Городские документы</h2><button class="rst" id="cdcx">Закрыть</button></div><p class="lbl2">Генеральный план, правила землепользования и застройки (ПЗЗ), смена вида использования: записи архивных разделов портала мэрии за 2009-2025. Дата в списке - дата постановления о назначении слушаний, а не дата самих слушаний. Итоги автоматически не разобраны, документы по ссылкам.</p>`+secs.map(s=>`<h3>${esc(s)} (${A.filter(d=>d.sec===s).length})</h3>`+A.filter(d=>d.sec===s).sort((a,b)=>(b.start||'').localeCompare(a.start||'')).map(d=>`<div class="pr" data-open="${d.id}" tabindex="0" role="button"><b>${esc(d.plain)}</b><br><span class="lbl2">постановление от ${fmt(d.start)} · ${d.citywide?'касается всего города':'место приблизительно'} ${opB(d.id)}</span></div>`).join('')).join('');
  $('cdcx').onclick=()=>{$('cdc').style.display='none'};
@@ -453,7 +469,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 $('cdcb').onclick=()=>{cdc();$('cdc').style.display='block'};
 $('opnb').onclick=()=>{opn();$('opn').style.display='block'};
 $('ctlb').onclick=()=>{ctl();$('ctl').style.display='block'};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('ctl').style.display='none';$('opn').style.display='none'}if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('#ctl [data-ck]')){e.preventDefault();e.target.click()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('opn').style.display==='block')writeLocation();$('ctl').style.display='none';$('opn').style.display='none'}if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('#ctl [data-ck]')){e.preventDefault();e.target.click()}});
 $('rs').onclick=()=>{Object.keys(F).forEach(k=>F[k]=typeof F[k]==='number'?0:'');openId=null;sync();zoomDistrict()};
 $('csv').onclick=()=>{const l=flt(),h=['Что предлагают','Официальное название','Район','Тип','Начало','Конец','Инициатор','Замечаний','Итог','Было','Станет','Зона ПЗЗ','Зона генплана','Кадастровый номер','Ссылка'],q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
  const t='﻿'+[h.map(q).join(';')].concat(l.map(d=>[d.plain,d.title,d.district,d.kind,d.start,d.end,d.init,d.remarks,recT(d),d.was,d.want,d.zone,d.gp,d.cad,d.url].map(q).join(';'))).join('\r\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='слушания-ярославль.csv';a.click()};
@@ -482,6 +498,20 @@ function restoreLocation() {
   openCard(record.id,true);
  }else if(explicit && innerWidth<=940) setPanel('pl');
 }
+const postEntryUrl=new URL(location.href);
+const linkedPost=postEntryUrl.searchParams.get('post');
 restoreLocation();
+if(linkedPost && Object.hasOwn(X.fullPosts||{},linkedPost)){
+ opn();
+ $('opn').style.display='block';
+ const details=Array.from($('opl').querySelectorAll('[data-post]')).find(el=>el.dataset.post===linkedPost);
+ if(details){
+  if(location.protocol!=='file:') history.replaceState(null,'',postEntryUrl);
+  details.open=true;
+  const entry=details.closest('.po');
+  entry.scrollIntoView({block:'start'});
+  details.querySelector('summary').focus({preventScroll:true});
+ }
+}
 addEventListener('hashchange',restoreLocation);
 </script></body></html>
