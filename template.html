@@ -250,6 +250,10 @@ const GP=L.GridLayer.extend({createTile(c,done){const t=document.createElement('
 const gpl=new GP({attribution:'генплан Ярославля (мэрия)',opacity:.6,tileSize:256,updateWhenZooming:false,keepBuffer:1});
 const layer=L.featureGroup().addTo(m),outline=L.layerGroup().addTo(m);let mk={};
 m.createPane('hearingBoundaries').style.zIndex=420;
+m.createPane('projectParcels').style.zIndex=425;
+const projectParcels=L.geoJSON(null,{pane:'projectParcels',style:{color:'#173f60',weight:1.5,fillOpacity:.05},
+ onEachFeature:(feature,parcel)=>parcel.bindTooltip(esc(feature.properties.number))
+}).addTo(m);
 function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ',dash=(rough||d.approx||d.how?.includes('приблизительно'))?'5':null,base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:dash};
  const s=d.shape;let o;
  if(d.boundary)o=L.geoJSON(d.boundary.geometry,{pane:'hearingBoundaries',style:{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3),smoothFactor:0}});
@@ -346,7 +350,16 @@ function charts(){$('charts').innerHTML=DIMS.filter(x=>x.k===breakdown.value).ma
 $('charts').onclick=e=>{const b=e.target.closest('[data-d]');if(b){tog(b.dataset.d,b.dataset.v);return}const mo=e.target.closest('[data-more]');if(mo){expanded[mo.dataset.more]=!expanded[mo.dataset.more];charts()}};
 // ---------- список и карточка
 let openId=null;
-function renderRight(){if(openId!=null){$('listv').style.display='none';$('card').style.display='block';card(D.find(x=>x.id===openId))}else{$('card').style.display='none';$('listv').style.display='block';list(flt())}}
+function renderRight(){
+ projectParcels.clearLayers();
+ if(openId!=null){
+  const selected=D.find(x=>x.id===openId);
+  if(selected.boundary?.parcels) projectParcels.addData(selected.boundary.parcels);
+  $('listv').style.display='none';$('card').style.display='block';card(selected);
+ }else{
+  $('card').style.display='none';$('listv').style.display='block';list(flt());
+ }
+}
 function list(l){const k=$('so').value,date=d=>d.project?d.start:(d.end||'');const L2=[...l].sort((a,b)=>k==='remarks'?b.remarks-a.remarks:date(b).localeCompare(date(a)));$('lc').textContent=`Записей: ${l.length}`;
  $('list').innerHTML=L2.map(d=>`<div class="it" data-id="${d.id}" tabindex="0" role="button"><div class="t">${esc(d.plain)}</div><div class="mt">${esc(d.district||'район не указан')} · ${stat(d).short}</div>`+
  `<span class="chip">${esc(d.kind)}</span>`+(d.remarks?`<span class="chip bad">${d.remarks} замеч.</span>`:'')+(d.rec==='отказ'?'<span class="chip bad">отказ</span>':'')+(d.arch&&d.citywide?'<span class="chip">касается всего города</span>':d.lat==null?'<span class="chip">нет на карте</span>':'')+opB(d.id)+`</div>`).join('')||'<p style="padding:12px;color:var(--mut)">Ничего не найдено</p>'}
@@ -430,7 +443,7 @@ function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_bl
  <details><summary>Официальное название</summary><p>${esc(d.title)}</p></details><p><a class="lnk" href="${BOT}?start=fb_${d.id}" target="_blank" rel="noopener">Нашли ошибку? Сообщить по записи №${d.id}</a></p></div>`;
  $('cb').onclick=closeCard;const cm=$('cm');if(cm)cm.onclick=()=>focusOn(d.id)}
 function outcome(d) {
- const report=d.docs.find(doc=>/^заключение/i.test(doc.name));
+ const report=d.docs.find(doc=>/^заключение/i.test(doc.name))||d.decision?.sources.find(doc=>/^заключение/i.test(doc.name));
  const status=d.has_result ? `Жители: ${resT(d)}. Замечания: ${remT(d)}. ${esc(recT(d))}.` : report ? 'Заключение доступно в документах.' : 'Заключение пока не найдено.';
  return `<div class="outcome"><h3>Итог обсуждения</h3><p>${status}</p>
  ${d.has_result ? '<p class="lbl2">Автоматический разбор заключения организатора.'+(d.decision?'':' Окончательное решение проверяйте по отдельному акту мэрии.')+'</p>' : ''}
