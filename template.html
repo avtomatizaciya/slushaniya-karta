@@ -138,7 +138,7 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 <header role="banner"><h1>Слушания Ярославля</h1><small>Публичные обсуждения мэрии, 2009-2026</small><a class="mkd" href="https://yar.city/maps/neighbors/" target="_blank" rel="noopener" title="Карта сообществ соседей по домам (сайт yar.city)">Карта домов МКД<small>сообщества соседей по домам</small></a><a class="bot" href="https://t.me/slushaniya_yaroslavl_bot" target="_blank" rel="noopener">Подписаться в боте</a></header>
 <div id="now" role="status"></div>
 <div class="bar" id="bar" role="search" aria-label="Поиск и фильтры">
- <input id="fq" type="search" placeholder="Улица или адрес" aria-label="Поиск по улице, адресу или слову">
+ <input id="fq" type="search" placeholder="Улица, адрес или название" aria-label="Поиск по улице, адресу или названию">
  <select id="fd" aria-label="Район"><option value="">Все районы</option></select>
  <button class="rst" id="ft" aria-haspopup="dialog">Фильтры</button>
  <button class="lnk" id="statsToggle" aria-controls="pc" aria-expanded="true">Скрыть цифры</button>
@@ -207,7 +207,7 @@ function flt(except){const q=F.q.trim().toLowerCase();
  return D.filter(d=>{if(metric && !metric.match(d))return false;for(const x of DIMS){if(x.k!==except&&F[x.k]&&x.get(d)!==F[x.k])return false}
   if(F.win&&!(F.win==='now'?(d.end||'')>=todayS:F.win==='year'?(d.start||'').startsWith(todayS.slice(0,4)):(d.end||'')>=back(+F.win)))return false;
   if(F.rem&&!d.remarks)return false;if(F.rej&&d.rec!=='отказ')return false;if(F.chg&&!change(d))return false;if(F.opn&&!OPS.has(d.id))return false;if(F.heritage&&!heritageCases.has(d.id))return false;
-  if(q&&!(d.plain+' '+d.title+' '+(d.addr||'')+' '+(d.init||'')).toLowerCase().includes(q))return false;return true})}
+  if(q&&![d.plain,d.title,d.addr,d.init,...(d.aliases||[])].join(' ').toLowerCase().includes(q))return false;return true})}
 // ---------- карта
 const CITY=[[57.5257,39.7036],[57.7753,40.0031]];
 const m=L.map('m',{attributionControl:false,zoomSnap:0.5,zoomDelta:1,wheelDebounceTime:60,wheelPxPerZoomLevel:90}).setView([57.6261,39.8845],11);let touched=false;['mousedown','touchstart','wheel','keydown'].forEach(ev=>$('m').addEventListener(ev,()=>{touched=true},{passive:true}));
@@ -374,7 +374,10 @@ function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]
  <p class="big ${st.open?'ok2':''}">${esc(st.long)}</p>
  ${!st.open && (d.end || d.has_result) ? outcome(d) : ''}
  ${d.decision ? `<section class="outcome project-decision"><h3>Решение мэрии</h3>
- <p><strong>${esc(d.decision.status)}</strong></p><p>${esc(d.decision.heritage)}</p><p>${esc(d.decision.review)}</p>
+ <p><strong>${esc(d.decision.status)}</strong></p>
+ ${d.decision.context ? `<p>${esc(d.decision.context)}</p>` : ''}
+ ${d.decision.review ? `<p>${esc(d.decision.review)}</p>` : ''}
+ ${d.decision.related ? `<p><a href="?id=${d.decision.related.id}">${esc(d.decision.related.name)}</a></p>` : ''}
  <ul class="lbl2l">${d.decision.sources.map(s=>`<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join('')}</ul></section>` : ''}
  ${st.open ? `<p>${when}${expo}</p><div class="btns"><button class="b blue" id="bs" aria-expanded="false" aria-controls="how">Как подать замечание</button><button class="b" id="bc">Добавить в календарь</button></div>
  <div id="how" hidden class="box"><a href="${esc(d.url)}" target="_blank" rel="noopener">Открыть объявление мэрии и проверить порядок подачи</a><p>${esc(X.tail)}</p><a href="https://www.gosuslugi.ru/" target="_blank" rel="noopener">Госуслуги</a></div>` : (!d.end ? `<p><a href="${esc(d.url)}" target="_blank" rel="noopener">Уточнить срок на портале мэрии</a></p>` : '')}
