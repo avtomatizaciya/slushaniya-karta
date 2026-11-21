@@ -75,19 +75,22 @@ for (const [key, color] of [['buffer','#b65b17'],['core','#783fac']]) {
  }).addTo(unescoGroup);
 }
 $('unescoSource').href=unesco.geoportal;
-$('unescoLayer').onchange=()=>{
- const visible=$('unescoLayer').checked;
- $('unescoLegend').hidden=!visible;
- if (!visible) {m.removeLayer(unescoGroup);return}
- if (innerWidth<=940) setPanel('pm');
- m.invalidateSize({pan:false});
- unescoGroup.addTo(m);
- const bounds=unescoGroup.getBounds();
- if (m.getZoom()<13 || !m.getBounds().intersects(bounds)) {
-  touched=true;
-  m.fitBounds(bounds.pad(.12),{maxZoom:14,animate:false});
- }
-};
+function bindPolygonLayer(toggle, legend, group) {
+ $(toggle).onchange=()=>{
+  const visible=$(toggle).checked;
+  $(legend).hidden=!visible;
+  if (!visible) {m.removeLayer(group);return}
+  if (innerWidth<=940) setPanel('pm');
+  m.invalidateSize({pan:false});
+  group.addTo(m);
+  const bounds=group.getBounds();
+  if (m.getZoom()<13 || !m.getBounds().intersects(bounds)) {
+   touched=true;
+   m.fitBounds(bounds.pad(.12),{maxZoom:14,animate:false});
+  }
+ };
+}
+bindPolygonLayer('unescoLayer','unescoLegend',unescoGroup);
 function unescoBlock(id) {
  const match=unesco.matches[id];
  if (!match) return '';
@@ -96,6 +99,26 @@ function unescoBlock(id) {
  return `<section class="box unesco-card"><h3>Границы ЮНЕСКО</h3>${lines}<p class="lbl2">Сопоставление по контурам дел и областного геопортала.</p>
  <p><a href="${esc(unesco.geoportal)}" target="_blank" rel="noopener">Слои геопортала</a> ·
  <a href="${esc(unesco.unesco)}" target="_blank" rel="noopener">Карта ЮНЕСКО</a></p></section>`;
+}
+
+const protection = X.protection;
+const protectionColors={oz:'#9e2257',zrz:'#257270',zopl:'#667932'};
+m.createPane('protectionZones').style.zIndex=400;
+const protectionGroup=L.geoJSON(protection.features,{pane:'protectionZones',interactive:false,style:feature=>{
+ const color=protectionColors[feature.properties.family];
+ return {color,fillColor:color,weight:1.5,fillOpacity:.14};
+}});
+$('protectionSource').href=protection.document;
+$('protectionCoverage').textContent=protection.coverage;
+bindPolygonLayer('protectionLayer','protectionLegend',protectionGroup);
+function protectionBlock(id) {
+ const match=protection.matches[id];
+ if (!match) return '';
+ const relation={inside:'целиком',partial:'частично',edge:'у границы, нужно уточнить',
+  edge_inside:'почти целиком, границу нужно уточнить'};
+ const lines=match.map(({code,status,page})=>`<li><a href="${esc(protection.document)}#page=${page}" target="_blank" rel="noopener">${esc(code)}</a> · ${relation[status]}</li>`).join('');
+ return `<section class="box protection-card"><h3>Зоны охраны памятников</h3><ul class="lbl2l">${lines}</ul>
+ <p class="lbl2">Сопоставление с контуром слушания по постановлению № 640-п.</p></section>`;
 }
 
 const heritageSearch = heritage.records.map(r=>normalizeHeritage([r.name,r.address,r.ensemble||'',r.status].join(' ')));
