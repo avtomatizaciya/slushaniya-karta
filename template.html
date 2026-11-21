@@ -451,7 +451,7 @@ function boundarySources(boundary){
 }
 function cardProject(d){
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button><button class="lnk" id="cm">На карте</button></div><div class="cd">
- <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span>${d.boundary?.partial?'<span class="chip">подтверждённая часть</span>':'<span class="chip">точная граница</span>'}</div>
+ <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span><span class="chip">${d.approx?'ориентировочная граница':d.boundary?.partial?'подтверждённая часть':'точная граница'}</span></div>
  ${cardBrief(d)}
  ${decisionBlock(d.decision)}
  <p class="lbl2">${esc(d.how)}</p>${boundarySources(d.boundary)}
