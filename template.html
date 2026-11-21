@@ -416,7 +416,7 @@ function cardBrief(d){
  return `<section class="card-brief" aria-label="Главное о проекте"><dl>
  <dt>Когда</dt><dd>${esc(when)}</dd><dt>Итог</dt><dd>${esc(result)}</dd>
  <dt>Изменения</dt><dd>${esc(change)}</dd><dt>Что важно</dt><dd>${esc(impact)}</dd>
- </dl>${source?`<a href="${esc(source.url)}" target="_blank" rel="noopener">${decision?'Открыть итоговый акт':'Открыть заключение'}</a>`:''}</section>`;
+ </dl>${source?`<a href="${esc(source.url)}" target="_blank" rel="noopener">${esc(decision?.sourceLabel||(decision?'Открыть итоговый акт':'Открыть заключение'))}</a>`:''}</section>`;
 }
 function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>');
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
