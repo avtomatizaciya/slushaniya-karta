@@ -1,32 +1,27 @@
-// Публичный список ОКН и адресная связь с темой обсуждения.
+// Публичный список ОКН и сопоставление адресных точек с контурами проектов.
 const heritage = __HERITAGE__;
 const normalizeHeritage = value => value.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/\s+/g,' ').trim();
-const streetTypes = {
- улица:['улица','улицы','улице','улицей','улицу','ул'], переулок:['переулок','переулка','переулке','переулком','пер'],
- проспект:['проспект','проспекта','проспекте','проспектом','просп','пр'], площадь:['площадь','площади','площадью','пл'],
- набережная:['набережная','набережной','набережную','наб'], проезд:['проезд','проезда','проезде','проездом','пр-д'],
- бульвар:['бульвар','бульвара','бульваре','бул'], шоссе:['шоссе'], парк:['парк','парка','парке']
-};
-function streetPatterns(street) {
- const [kind,...words] = street.split(' ');
- const forms = [words.join(' '), words.map(w=>w.replace(/ая$/,'ой').replace(/ский$/,'ского')).join(' '),
-                words.map(w=>w.replace(/ая$/,'ую')).join(' ')];
- const result = [];
- for (const t of streetTypes[kind]) for (const name of new Set(forms)) result.push(t+' '+name, name+' '+t);
- return result;
+function insideRing([x,y], ring) {
+ let inside = false;
+ for (let i = 1; i < ring.length; i++) {
+  const [x0,y0] = ring[i-1], [x1,y1] = ring[i];
+  if ((y0 > y) !== (y1 > y) && x < x0 + (x1-x0)*(y-y0)/(y1-y0)) inside = !inside;
+ }
+ return inside;
 }
-const heritageStreets = new Map();
-for (const row of heritage.records) for (const street of row.streets) {
- if (!heritageStreets.has(street)) heritageStreets.set(street,streetPatterns(street));
-}
+const heritagePoints = heritage.records.filter(row => row.point);
 const heritageCases = new Map();
 for (const hearing of D) {
- if (hearing.citywide) continue;
- const subject = ' '+normalizeHeritage([hearing.title,hearing.addr].filter(Boolean).join(' | '))
-   .replace(/(ул|пер|просп|пр|пл|наб|бул)\./g,'$1 ').replace(/[,.();:|«»]/g,' | ').replace(/[^а-я0-9|-]+/g,' ')+' ';
- const matched = new Set();
- for (const [street, names] of heritageStreets) if (names.some(name=>subject.includes(' '+name+' '))) matched.add(street);
- if (matched.size) heritageCases.set(hearing.id, heritage.records.filter(row=>row.streets.some(street=>matched.has(street))));
+ const geometry = hearing.boundary?.geometry;
+ if (hearing.citywide || hearing.approx || !geometry) continue;
+ const polygons = geometry.type === 'Polygon' ? [geometry.coordinates]
+   : geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
+ if (!polygons.length) continue;
+ const matched = heritagePoints.filter(({point:[lat,lon]}) => {
+  const point = [lon,lat];
+  return polygons.some(([outer,...holes]) => insideRing(point,outer) && !holes.some(hole => insideRing(point,hole)));
+ });
+ if (matched.length) heritageCases.set(hearing.id,matched);
 }
 function heritageRow(row) {
  const source = heritage.sources[row.source];
@@ -39,8 +34,8 @@ function heritageBlock(id) {
  if (!rows) return '';
  const remaining = rows.slice(6);
  const more = remaining.length ? `<details><summary>Ещё записей: ${remaining.length}</summary><ul class="heritage-list">${remaining.map(heritageRow).join('')}</ul></details>` : '';
- return `<details class="heritage-block"><summary>Объекты культурного наследия на упомянутых улицах (${rows.length})</summary>
- <p>Эти улицы названы в материалах обсуждения и в адресах из областного перечня. Попадает ли участок в охранную зону, нужно проверять по её утверждённым границам.</p>
+ return `<details class="heritage-block"><summary>Адресные точки ОКН в контуре (${rows.length})</summary>
+ <p>Адресные точки этих объектов попадают в показанный контур. Охранные зоны сверяются отдельно по утверждённым границам.</p>
  <ul class="heritage-list">${rows.slice(0,6).map(heritageRow).join('')}</ul>${more}</details>`;
 }
 const heritageLayer = L.layerGroup();
