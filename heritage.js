@@ -121,6 +121,33 @@ function protectionBlock(id) {
  <p class="lbl2">Сопоставление с контуром слушания по постановлению № 640-п.</p></section>`;
 }
 
+const oopt = X.oopt;
+const ooptByNumber = new Map(oopt.features.features.map(zone=>[zone.id,zone.properties]));
+m.createPane('ooptZones').style.zIndex=385;
+const ooptGroup=L.geoJSON(oopt.features,{pane:'ooptZones',style:feature=>{
+ const buffer=feature.properties.scope==='buffer', color=buffer?'#467987':'#42713f';
+ return {color,fillColor:color,weight:2,fillOpacity:buffer?.12:.22,dashArray:buffer?'5 5':null};
+},onEachFeature:(feature,layer)=>{
+ const p=feature.properties;
+ layer.bindPopup(`<strong>${esc(p.name)}</strong><p>${esc(p.category)} · ${esc(p.number)}</p>
+ ${p.cityPart?'<p>Показана часть территории в границах Ярославля.</p>':''}
+ <a href="${esc(p.source)}" target="_blank" rel="noopener">Контур в ГИСОГД</a> ·
+ <a href="${esc(oopt.document)}" target="_blank" rel="noopener">Перечень ООПТ города</a>`);
+}});
+$('ooptSource').href=oopt.document;
+bindPolygonLayer('ooptLayer','ooptLegend',ooptGroup);
+function ooptBlock(id){
+ const match=oopt.matches[id];
+ if(!match)return '';
+ const relation={inside:'целиком',partial:'частично',edge:'у границы, требуется уточнение'};
+ const lines=match.map(({number,status})=>{
+  const p=ooptByNumber.get(number);
+  return `<li><a href="${esc(p.source)}" target="_blank" rel="noopener">${esc(p.name)}</a> · ${relation[status]}</li>`;
+ }).join('');
+ return `<section class="box oopt-card"><h3>Природные территории (ООПТ)</h3><ul class="lbl2l">${lines}</ul>
+ <p class="lbl2">Сопоставление по контурам ГИСОГД. <a href="${esc(oopt.document)}" target="_blank" rel="noopener">Перечень ООПТ города</a></p></section>`;
+}
+
 const heritageSearch = heritage.records.map(r=>normalizeHeritage([r.name,r.address,r.ensemble||'',r.status].join(' ')));
 let heritageLimit=25;
 function showHeritageResults() {
