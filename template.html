@@ -424,7 +424,7 @@ function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_bl
  ${cardBrief(d)}
  <h3>Что это</h3><p>${esc(d.expl)}</p>
  <p class="lbl2">${d.citywide?'Касается всего города: на карте точки нет, запись видна в списке и в блоке «Городские документы».':'Место на карте: '+esc(d.how||'не определено')+'. Границы неточные.'}</p>
- ${heritageBlock(d.id)}${posts(d.id)}<h3>Итоги</h3><p>Итоги этого обсуждения не разобраны автоматически. Смотрите протокол и заключение в документах ниже.</p>
+ ${heritageBlock(d.id)}${posts(d.id)}${d.decision?decisionBlock(d.decision):'<h3>Итоги</h3><p>Итоги этого обсуждения не разобраны автоматически. Смотрите протокол и заключение в документах ниже.</p>'}
  <h3>Документы</h3><p>${dl||'<span class="lbl2">Документы не приложены.</span>'}</p>
  <p><a class="lnk" href="${esc(d.url)}" target="_blank" rel="noopener">Страница раздела на портале мэрии</a></p>
  <details><summary>Официальное название</summary><p>${esc(d.title)}</p></details><p><a class="lnk" href="${BOT}?start=fb_${d.id}" target="_blank" rel="noopener">Нашли ошибку? Сообщить по записи №${d.id}</a></p></div>`;
@@ -438,7 +438,7 @@ function outcome(d) {
 }
 function decisionBlock(decision){
  if(!decision)return '';
- return `<section class="outcome project-decision"><h3>Решение мэрии</h3>
+ return `<section class="outcome project-decision"><h3>${esc(decision.heading||'Решение мэрии')}</h3>
  <p><strong>${esc(decision.status)}</strong></p>
  ${decision.context ? `<p>${esc(decision.context)}</p>` : ''}
  ${decision.review ? `<p>${esc(decision.review)}</p>` : ''}
