@@ -251,7 +251,8 @@ const gpl=new GP({attribution:'генплан Ярославля (мэрия)',o
 const layer=L.featureGroup().addTo(m),outline=L.layerGroup().addTo(m);let mk={};
 m.createPane('hearingBoundaries').style.zIndex=420;
 m.createPane('projectParcels').style.zIndex=425;
-const projectParcels=L.geoJSON(null,{pane:'projectParcels',style:{color:'#173f60',weight:1.5,fillOpacity:.05},
+const projectParcels=L.geoJSON(null,{pane:'projectParcels',style:feature=>({color:feature.properties.disputed?'#a5440e':'#173f60',
+ weight:1.5,fillOpacity:.05,dashArray:feature.properties.disputed||feature.properties.approximate?'5 4':null}),
  onEachFeature:(feature,parcel)=>parcel.bindTooltip(esc(feature.properties.number))
 }).addTo(m);
 function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ',dash=(rough||d.approx||d.how?.includes('приблизительно'))?'5':null,base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:dash};
