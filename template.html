@@ -77,7 +77,7 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
 .lbl2l{margin:4px 0;padding-left:18px;font-size:12px}.lbl2l a{color:#4a42d6}
 .cd details{margin:8px 0}.cd summary{cursor:pointer;color:#4a42d6}.moreb{border:0;background:none;color:#4a42d6;cursor:pointer;font:inherit;padding:0;text-decoration:underline}
 #bar{gap:8px}#fq{width:clamp(180px,24vw,360px)}#ft{display:inline-flex;align-items:center;justify-content:center}
-#cnt{margin-left:auto;color:var(--mut)}.chips:empty{display:none}.fc{border:0;font:inherit}.fc:focus-visible{outline:2px solid var(--a)}
+.bar-end{display:flex;align-items:center;gap:10px;margin-left:auto}#cnt{color:var(--mut)}.chips:empty{display:none}.fc{border:0;font:inherit}.fc:focus-visible{outline:2px solid var(--a)}
 #main.no-stats{grid-template-columns:minmax(0,1fr) clamp(310px,32vw,485px)}#main.no-stats #pc{display:none}
 #filterDialog{color:var(--ink);padding:0;border:1px solid var(--line);border-radius:16px;width:min(510px,96vw);max-height:88dvh;box-shadow:0 8px 40px #152f4933}
 #filterDialog[open]{display:flex;flex-direction:column}#filterDialog::backdrop{background:#102e4666}
@@ -91,7 +91,8 @@ main{display:grid;grid-template-columns:clamp(290px,25vw,350px) minmax(0,1fr) cl
 #now .lnk{min-height:24px}#filterDialog:not([open]){display:none}.map-tools{display:none}.outcome{padding:10px 12px;border-left:3px solid #30796b;background:#f1f8f6;border-radius:6px}.outcome h3{margin-top:0;color:#224b44}.outcome p{margin:5px 0}.outcome a{color:#174a80}
 @media(max-width:940px){
  #bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 8px;padding:6px 8px}
- #fq{width:100%;grid-column:1;grid-row:1}#ft{grid-column:2;grid-row:1}#fd{grid-column:1;grid-row:2;width:100%}#cnt{grid-column:2;grid-row:2;margin:0;font-size:11px}#statsToggle{display:none}
+ #fq{width:100%;grid-column:1;grid-row:1}#ft{grid-column:2;grid-row:1}#fd{grid-column:1;grid-row:2;width:100%}#statsToggle{display:none}
+ .bar-end{grid-column:2;grid-row:2;gap:0;flex-direction:column;align-items:flex-end}#cnt{font-size:11px}#registryOpen{min-height:26px;padding:0;font-size:12px}
  .chips{grid-column:1/-1;flex-wrap:nowrap;overflow:auto}.fc{flex:none;max-width:180px}
  #main.no-stats{grid-template-columns:1fr}#main.no-stats #pc.on{display:block}
  .map-tools{display:flex;position:absolute;z-index:750;right:6px;top:6px;gap:4px}.map-tool{min-height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:white;color:var(--ink);font:inherit;box-shadow:0 1px 4px #0002}
@@ -134,6 +135,18 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 .heritage-list{list-style:none;padding:0;margin:0}.heritage-list li{padding:8px 0;border-bottom:1px solid var(--line)}
 .heritage-block{border-left:3px solid #006c59;padding:8px 12px;margin:12px 0;background:#f1f8f6}.heritage-block>summary{font-weight:650;cursor:pointer}
 .heritage-list summary,.heritage-body summary{cursor:pointer}.heritage-list small{color:#37574d}
+.card-brief{background:#f0f5fb;border:1px solid #d5e2ee;border-radius:10px;padding:10px 12px;margin:10px 0 14px}
+.card-brief dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 10px;line-height:1.35}
+.card-brief dt{font-weight:700}.card-brief dd{margin:0;overflow-wrap:anywhere}.card-brief a{display:inline-block;margin-top:7px}
+@media(max-width:410px){.card-brief dl{font-size:13px;column-gap:7px}}
+#registryDialog{width:min(690px,94vw);max-height:86dvh;padding:0;border:1px solid var(--line);border-radius:14px;color:var(--ink)}
+#registryDialog[open]{display:flex;flex-direction:column}#registryDialog::backdrop{background:#102e4666}
+.registry-controls{padding:12px 16px 4px}.registry-controls input{width:100%;box-sizing:border-box;font:inherit;padding:9px}
+.registry-controls label{display:block;margin:8px 0}.registry-controls label input{width:auto;margin-right:5px}
+.registry-items{list-style:none;padding:0 16px;margin:0;overflow:auto;overflow-wrap:anywhere;overscroll-behavior:contain}
+.registry-items li{padding:10px 0;border-bottom:1px solid var(--line)}.registry-items p{margin:4px 0}
+.registry-links{display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px}.registry-status{color:var(--mut);font-size:.92em}
+.registry-footer{padding:8px 16px;display:flex;align-items:center;gap:10px;justify-content:space-between}
 </style></head><body>
 <header role="banner"><h1>Слушания Ярославля</h1><small>Публичные обсуждения мэрии, 2009-2026</small><a class="mkd" href="https://yar.city/maps/neighbors/" target="_blank" rel="noopener" title="Карта сообществ соседей по домам (сайт yar.city)">Карта домов МКД<small>сообщества соседей по домам</small></a><a class="bot" href="https://t.me/slushaniya_yaroslavl_bot" target="_blank" rel="noopener">Подписаться в боте</a></header>
 <div id="now" role="status"></div>
@@ -142,7 +155,7 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
  <select id="fd" aria-label="Район"><option value="">Все районы</option></select>
  <button class="rst" id="ft" aria-haspopup="dialog">Фильтры</button>
  <button class="lnk" id="statsToggle" aria-controls="pc" aria-expanded="true">Скрыть цифры</button>
- <span id="cnt" role="status"></span>
+ <div class="bar-end"><button class="lnk" id="registryOpen" aria-haspopup="dialog">Реестр актов</button><span id="cnt" role="status"></span></div>
  <span class="chips" id="chips"></span>
 </div>
 <dialog id="filterDialog" aria-labelledby="filterTitle">
@@ -161,6 +174,12 @@ button.kpi:hover,button.kpi[aria-pressed=true]{border-color:#665fc4;background:#
 <a href="https://portal.yarregion.ru/depts-dookn/doc/section.php?SECTION_CODE=gosudarstvennaya-istoriko-kulturnaya-ekspertiza" target="_blank" rel="noopener">Все публикации и новые сроки на портале области</a></details>
 <p><label for="heritageSearch">Поиск по названию, улице или статусу</label></p><input type="search" id="heritageSearch" placeholder="Например, Масленникова"><p id="heritageCount" role="status"></p>
 <ul class="heritage-list" id="heritageResults"></ul><button type="button" id="heritageMore" class="lnk">Ещё 25 записей</button></div></dialog>
+<dialog id="registryDialog" aria-labelledby="registryTitle">
+ <div class="filter-head"><h2 id="registryTitle">Реестр актов</h2><button class="lnk" id="registryClose">Закрыть</button></div>
+ <div class="registry-controls"><input type="search" id="registrySearch" aria-label="Поиск в реестре актов" placeholder="Улица, название, год или номер акта" autofocus><label><input type="checkbox" id="registryVerified"> Только сверенные с итоговым актом</label><p class="lbl2" id="registryCount" role="status"></p></div>
+ <ul id="registryItems" class="registry-items"></ul>
+ <div class="registry-footer"><button class="lnk" id="registryPrev">Назад</button><span id="registryPage" class="lbl2" aria-live="polite"></span><button class="lnk" id="registryNext">Дальше</button></div>
+</dialog>
 <main id="main">
 <section class="panel" id="pc" tabindex="0" aria-label="Цифры и диаграммы"><div class="kpis" id="kpis"><div id="metricTiles"></div><label class="kpi cb heritage-toggle"><input type="checkbox" id="heritageLayer"> <span>Показать ОКН на карте</span></label><label class="kpi cb heritage-toggle unesco-toggle"><input type="checkbox" id="unescoLayer"> <span>ЮНЕСКО и буферная зона</span></label><label class="kpi cb heritage-toggle protection-toggle"><input type="checkbox" id="protectionLayer"> <span>Зоны охраны памятников (ПЗО)</span></label></div><details class="metric-note"><summary>Как посчитаны цифры</summary><p id="metricNote"></p></details><label class="breakdown">Разбивка <select id="breakdown"></select></label><div id="charts"></div></section>
 <section class="panel on" id="pm"><div id="m"></div><div class="map-tools"><button class="map-tool" id="legendToggle" aria-controls="leg" aria-expanded="false">Условные знаки</button><button class="map-tool" id="opinionsToggle" aria-controls="strip" aria-expanded="false">Мнения</button></div><div id="strip" role="group" aria-label="Мнения авторов" title="Записи со страниц авторов ВКонтакте. У репостов указан источник."></div><div class="leg" id="leg"></div><div class="leg" id="leg2"></div><div class="leg" id="unescoLegend" hidden><i class="unesco-core"></i>Территория ЮНЕСКО<br><i class="unesco-buffer"></i>Буферная зона<br><a id="unescoSource" target="_blank" rel="noopener">Геопортал области</a></div><div class="leg" id="protectionLegend" hidden><i class="pzo-oz"></i>Охранные зоны<br><i class="pzo-zrz"></i>Регулирование застройки<br><i class="pzo-zopl"></i>Охраняемый ландшафт<br><a id="protectionSource" target="_blank" rel="noopener">Постановление № 640-п</a><br><small id="protectionCoverage"></small></div></section>
@@ -331,6 +350,35 @@ function stat(d){if(d.project)return{short:'утверждён '+fmt(d.start),op
  return{short:`до ${fmt(d.end)} (${n} дн.)`,long:`Приём замечаний до ${fmt(d.end)}, осталось ${n} дн.`,open:true}}
 function openCard(id,fromMap){openId=id;writeLocation();document.querySelectorAll('.opa').forEach(e=>e.classList.toggle('sel',+e.dataset.h===id));renderRight();if(innerWidth<=940&&fromMap)setPanel('pl');$('pl').scrollTop=0}
 function closeCard(){openId=null;writeLocation();renderRight()}
+const registryDialog=$('registryDialog'), registryPageSize=25;
+let registryPage=0;
+function renderRegistry(){
+ const query=$('registrySearch').value.trim().toLocaleLowerCase('ru').replaceAll('ё','е').split(/\s+/).filter(Boolean);
+ const verified=$('registryVerified').checked;
+ const rows=X.registry.filter(row=>{
+  const text=[row.title,row.date,row.number,row.gis].join(' ').toLocaleLowerCase('ru').replaceAll('ё','е');
+  return (!verified||row.verified)&&query.every(word=>text.includes(word));
+ });
+ const pages=Math.ceil(rows.length/registryPageSize);
+ registryPage=Math.max(0,Math.min(registryPage,pages-1));
+ const start=registryPage*registryPageSize;
+ $('registryCount').textContent=`Найдено ${rows.length} из ${X.registry.length} записей`;
+ $('registryPage').textContent=pages?`Страница ${registryPage+1} из ${pages}`:'';
+ $('registryPrev').disabled=registryPage===0;
+ $('registryNext').disabled=registryPage>=pages-1;
+ $('registryItems').innerHTML=rows.slice(start,start+registryPageSize).map(row=>`<li><strong>${esc(row.title)}</strong>
+  <p class="registry-status">${esc(row.date||'Дата уточняется')}${row.number?' · № '+esc(row.number):''} · ${esc(row.status)}</p>
+  <div class="registry-links">${row.card?`<button type="button" class="lnk" data-registry-card="${row.card}">Карточка на карте</button>`:''}
+  ${row.document?`<a href="${esc(row.document)}" target="_blank" rel="noopener">Документ</a>`:''}
+  ${row.sources.map((url,i)=>`<a href="${esc(url)}" target="_blank" rel="noopener">${i?'Источник '+(i+1):'Источник'}</a>`).join('')}</div></li>`).join('')||'<li>Записей по этому запросу нет.</li>';
+ $('registryItems').scrollTop=0;
+}
+$('registryOpen').onclick=()=>{renderRegistry();registryDialog.showModal()};
+$('registryClose').onclick=()=>registryDialog.close();
+$('registrySearch').oninput=$('registryVerified').onchange=()=>{registryPage=0;renderRegistry()};
+$('registryPrev').onclick=()=>{registryPage--;renderRegistry()};
+$('registryNext').onclick=()=>{registryPage++;renderRegistry()};
+$('registryItems').onclick=e=>{const card=e.target.closest('[data-registry-card]');if(card){registryDialog.close();openCard(+card.dataset.registryCard,true)}};
 $('list').onclick=e=>{const it=e.target.closest('.it');if(!it)return;const id=+it.dataset.id;openCard(id);const d=D.find(x=>x.id===id);if(d.lat!=null&&innerWidth>940)focusOn(id)};
 $('so').onchange=()=>list(flt());
 function ics(d){const z=s=>s.replace(/-/g,''),nx=new Date(Date.parse(d.end)+864e5).toISOString().slice(0,10).replace(/-/g,'');
@@ -347,10 +395,26 @@ function templ(d){const w=d.addr||d.plain,ttl=`«${d.plain}»`+(d.addr&&!d.plain
  return[['Поддерживаю',`Прошу учесть моё мнение по вопросу ${ttl}. Я поддерживаю предлагаемое решение.\nПочему это важно для меня: [напишите своими словами].`+sign],
  ['Не согласен',`Не согласен с предлагаемым решением по вопросу ${ttl} и прошу его не утверждать в предложенном виде.\nПричины: [например: нагрузка на двор и проезд, этажность, зелёная зона - укажите свои].`+sign],
  ['Прошу учесть / разъяснить',`Прошу учесть и разъяснить по вопросу ${ttl}:\n1) [ваш вопрос или условие];\n2) [ваш вопрос или условие].\nПрошу направить ответ в установленном порядке.`+sign]]}
+function cardBrief(d){
+ const st=stat(d), decision=d.decision, report=d.docs.find(x=>/^заключение/i.test(x.name));
+ const when=d.project?`${fmt(d.start)} · дата постановления. ${d.procedure}`:d.arch?`${fmt(d.start)} · дата постановления о назначении. Даты слушаний уточняются.`:d.start&&d.end?`${fmt(d.start)} – ${fmt(d.end)}`:d.end?`До ${fmt(d.end)}`:'Даты уточняются.';
+ const result=decision?.status||(st.open?'Идёт приём замечаний.':d.rec?recT(d):report?'Заключение опубликовано. Решение мэрии уточняется.':'Итоговый акт пока не найден.');
+ const proposed=d.want?`${d.was?d.was+' → ':''}${d.want}`:d.purpose;
+ const short=proposed?.length>185?proposed.slice(0,185).replace(/\s+\S*$/,'')+'…':proposed;
+ const change=decision?.change||(short?`Предлагалось: ${short}`:'Подтверждённых сведений об изменениях пока нет.');
+ const zones=X.unesco?.matches[d.id], pzo=X.protection?.matches[d.id];
+ const flags=[zones?.core?'Территория ЮНЕСКО':'',zones?.buffer?'Буферная зона ЮНЕСКО':'',pzo?.length?'Зоны охраны памятников':''].filter(Boolean);
+ const impact=decision?.impact||(flags.length?`По карте стоит проверить ограничения для проекта (${flags.join(', ')}).`:'Влияние на жителей и город пока не оценено.');
+ const source=decision?.sources[0]||report;
+ return `<section class="card-brief" aria-label="Главное о проекте"><dl>
+ <dt>Когда</dt><dd>${esc(when)}</dd><dt>Итог</dt><dd>${esc(result)}</dd>
+ <dt>Изменения</dt><dd>${esc(change)}</dd><dt>Что важно</dt><dd>${esc(impact)}</dd>
+ </dl>${source?`<a href="${esc(source.url)}" target="_blank" rel="noopener">${decision?'Открыть итоговый акт':'Открыть заключение'}</a>`:''}</section>`;
+}
 function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>');
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
  <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.sec)}</span><span class="chip">постановление от ${fmt(d.start)}</span>${d.citywide?'<span class="chip">касается всего города</span>':'<span class="chip">место приблизительно</span>'}${opB(d.id)}</div>
- <p class="big">Постановление о назначении слушаний от ${fmt(d.start)}.</p><p class="lbl2">Это дата постановления, а не дата самих слушаний: дату проведения смотрите в постановлении и регламенте.</p>
+ ${cardBrief(d)}
  <h3>Что это</h3><p>${esc(d.expl)}</p>
  <p class="lbl2">${d.citywide?'Касается всего города: на карте точки нет, запись видна в списке и в блоке «Городские документы».':'Место на карте: '+esc(d.how||'не определено')+'. Границы неточные.'}</p>
  ${heritageBlock(d.id)}${posts(d.id)}<h3>Итоги</h3><p>Итоги этого обсуждения не разобраны автоматически. Смотрите протокол и заключение в документах ниже.</p>
@@ -363,7 +427,7 @@ function outcome(d) {
  const status=d.has_result ? `Жители: ${resT(d)}. Замечания: ${remT(d)}. ${esc(recT(d))}.` : report ? 'Заключение доступно в документах.' : 'Заключение пока не найдено.';
  return `<div class="outcome"><h3>Итог обсуждения</h3><p>${status}</p>
  ${d.has_result ? '<p class="lbl2">Автоматический разбор заключения организатора.'+(d.decision?'':' Окончательное решение проверяйте по отдельному акту мэрии.')+'</p>' : ''}
- <a href="${esc(report ? report.url : d.url)}" target="_blank" rel="noopener">${report ? 'Открыть заключение' : 'Открыть дело на портале мэрии'}</a></div>`;
+ ${!report||d.decision?`<a href="${esc(report ? report.url : d.url)}" target="_blank" rel="noopener">${report ? 'Открыть заключение' : 'Открыть дело на портале мэрии'}</a>`:''}</div>`;
 }
 function decisionBlock(decision){
  if(!decision)return '';
@@ -381,6 +445,7 @@ function boundarySources(boundary){
 function cardProject(d){
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button><button class="lnk" id="cm">На карте</button></div><div class="cd">
  <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span></div>
+ ${cardBrief(d)}
  ${decisionBlock(d.decision)}
  <p class="lbl2">${esc(d.how)}</p>${boundarySources(d.boundary)}
  ${unescoBlock(d.id)}${protectionBlock(d.id)}
@@ -394,7 +459,7 @@ function card(d){if(d.project)return cardProject(d);if(d.arch)return cardArch(d)
  const T=templ(d);
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
  <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip ${st.open?'ok':''}">${st.open?'идёт приём замечаний':d.end?'завершено':'срок не указан'}</span>${d.rec==='отказ'?'<span class="chip bad">рекомендован отказ</span>':''}</div>
- <p class="big ${st.open?'ok2':''}">${esc(st.long)}</p>
+ ${cardBrief(d)}
  ${!st.open && (d.end || d.has_result) ? outcome(d) : ''}
  ${decisionBlock(d.decision)}
  ${st.open ? `<p>${when}${expo}</p><div class="btns"><button class="b blue" id="bs" aria-expanded="false" aria-controls="how">Как подать замечание</button><button class="b" id="bc">Добавить в календарь</button></div>
