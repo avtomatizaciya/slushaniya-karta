@@ -211,9 +211,11 @@ const GP=L.GridLayer.extend({createTile(c,done){const t=document.createElement('
  gpImg.complete&&gpImg.naturalWidth?draw():gpImg.addEventListener('load',draw,{once:true});return t}});
 const gpl=new GP({attribution:'генплан Ярославля (мэрия)',opacity:.6,tileSize:256,updateWhenZooming:false,keepBuffer:1});
 const layer=L.featureGroup().addTo(m),outline=L.layerGroup().addTo(m);let mk={};
-function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ',dash=(rough||d.approx)?'5':null,base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:dash};
+m.createPane('hearingBoundaries').style.zIndex=420;
+function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ',dash=(rough||d.approx||d.how?.includes('приблизительно'))?'5':null,base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:dash};
  const s=d.shape;let o;
- if(s&&s[0]==='poly')o=L.polygon(s[1],{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3)});
+ if(d.boundary)o=L.geoJSON(d.boundary.geometry,{pane:'hearingBoundaries',style:{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3),smoothFactor:0}});
+ else if(s&&s[0]==='poly')o=L.polygon(s[1],{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3)});
  else if(s&&s[0]==='rect'&&!d.how.startsWith('адрес'))o=L.rectangle([[s[1],s[2]],[s[3],s[4]]],{...base,fillOpacity:.2});
  else if(s&&s[0]==='circle')o=L.circle([d.lat,d.lon],{...base,radius:s[1],fillOpacity:.15});
  else o=L.circleMarker([d.lat,d.lon],{...base,color:bad?'#c00':'#fff',weight:bad?3:1,radius:rough?9:7+Math.min(d.remarks,80)/6,fillOpacity:rough?.35:.85});
@@ -248,6 +250,7 @@ function opIcons(d){const by={};(X.posts||[]).filter(o=>(o.h||[]).includes(d.id)
   b.on('add',()=>{const e=b.getElement();if(e){e.setAttribute('role','button');e.dataset.h=d.id;e.classList.toggle('sel',d.id===openId);e.setAttribute('aria-label','Мнение: '+a+', '+(l[0].d||''))}});b.addTo(layer)})}
 function drawMap(list){layer.clearLayers();mk={};list.filter(d=>d.lat!=null).forEach(d=>{const o=shapeOf(d);mk[d.id]=o;o.addTo(layer);if(OPS.has(d.id)&&SHOWOP)opIcons(d)})}
 function focusOn(id){touched=true;const o=mk[id];if(!o)return;const d=D.find(x=>x.id===id);setPanel('pm');m.invalidateSize();
+ if(d.boundary){pendingDistrict=false;o.bringToFront();m.fitBounds(o.getBounds().pad(.4),{maxZoom:17,animate:false});return}
  if(o.getBounds&&d.how&&!d.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:17});else m.setView([d.lat,d.lon],Math.max(m.getZoom(),16))}
 let pendingDistrict=false;
 function zoomDistrict(){touched=true;outline.clearLayers();const n=F.district;
@@ -363,6 +366,7 @@ function card(d){if(d.arch)return cardArch(d);const st=stat(d),K=X.kinds[d.ckey]
  <p><a href="${BOT}?start=ev_${d.id}" target="_blank" rel="noopener">Следить за этим слушанием</a></p>
  <h3>Что предлагают</h3><p>${esc(d.expl)}</p>${facts.length?'<table class="ft">'+facts.map(f=>`<tr><td>${f[0]}</td><td>${f[1]}</td></tr>`).join('')+'</table>':''}
  <p class="lbl2">Место на карте: ${esc(d.how||'не определено')}${d.approx?'. Границы приблизительные.':''}</p>
+ ${d.boundary?`<p class="lbl2 boundary-sources">${esc(d.boundary.precision)}<br>${d.boundary.sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`).join(' · ')}</p>`:''}
  <details><summary>Справка о процедуре и возможных последствиях</summary><div class="pm"><div><b>Возможные плюсы</b><ul>${K.pros.map(x=>'<li>'+esc(x)+'</li>').join('')||'<li>-</li>'}</ul></div><div><b>На что обратить внимание</b><ul>${K.risks.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul></div></div><p class="lbl2">Общие сведения для этого типа обсуждений.</p></details>
  ${d.near?`<h3>Что рядом</h3><table class="ft"><tr><td></td><td><b>до 500 м</b></td><td><b>до 1000 м</b></td></tr>${[['school','Школы'],['kg','Детские сады'],['clinic','Поликлиники'],['pharmacy','Аптеки'],['park','Парки']].map(([k,n])=>`<tr><td>${n}</td><td>${d.near[k][0]}</td><td>${d.near[k][1]}</td></tr>`).join('')}</table><p class="lbl2">От центра территории слушания. По данным 2ГИС и OSM на дату сборки, могут быть неполные. Остановок транспорта в этих данных нет.</p>`:''}
  <h3>История места</h3>${d.prior&&d.prior.length?d.prior.map(p=>`<div class="pr"><b><button class="lnk" data-open="${p.id}" style="text-align:left;font-weight:700">${esc(p.plain)}</button></b><br><span class="lbl2">${esc(p.why)} · ${fmt(p.end)} · ${p.has_result?('замечания: '+(p.rem===true?(p.remarks||'есть'):p.rem===false?'не было':'не распознано')+'; '+(p.rec==='отказ'?'организатор рекомендовал отказ':p.rec?'организатор рекомендовал утвердить':'рекомендация не распознана')):'итог не получен'}</span> <a href="${esc(p.url)}" target="_blank" rel="noopener">портал</a></div>`).join('')+'<p class="lbl2">Совпадение по кадастровому номеру, адресу, пересечению территорий, общим улицам или заявителю-организации; частных лиц не показываем.</p>':'<p class="lbl2">Прошлых слушаний по этому месту в базе не найдено (база охватывает 2023-2026).</p>'}
@@ -499,7 +503,9 @@ $('rs').onclick=()=>{Object.keys(F).forEach(k=>F[k]=typeof F[k]==='number'?0:'')
 $('csv').onclick=()=>{const l=flt(),h=['Что предлагают','Официальное название','Район','Тип','Начало','Конец','Инициатор','Замечаний','Итог','Было','Станет','Зона ПЗЗ','Зона генплана','Кадастровый номер','Ссылка'],q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
  const t='﻿'+[h.map(q).join(';')].concat(l.map(d=>[d.plain,d.title,d.district,d.kind,d.start,d.end,d.init,d.remarks,recT(d),d.was,d.want,d.zone,d.gp,d.cad,d.url].map(q).join(';'))).join('\r\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='слушания-ярославль.csv';a.click()};
 function setPanel(id){document.querySelectorAll('#mtabs button').forEach(b=>b.classList.toggle('on',b.dataset.p===id));['pc','pm','pl'].forEach(p=>$(p).classList.toggle('on',p===id));setTimeout(()=>{m.invalidateSize();if(id==='pm'&&pendingDistrict)zoomDistrict()},30)}
-$('mtabs').onclick=e=>{const b=e.target.closest('button');if(b)setPanel(b.dataset.p)};
+$('mtabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.p==='pm'&&D.find(d=>d.id===openId)?.boundary&&mk[openId])focusOn(openId);
+ else setPanel(b.dataset.p)};
 function desk(){if(innerWidth>940)['pc','pm','pl'].forEach(p=>$(p).classList.remove('on'));else if(!['pc','pm','pl'].some(p=>$(p).classList.contains('on')))setPanel('pm');setTimeout(()=>m.invalidateSize(),30)}
 function nowBanner(){const n=D.filter(d=>(d.end||'')>=todayS).length,el=$('now');
  if(n){el.className='';el.innerHTML=`<b>Сейчас идёт ${n} ${n%10===1&&n%100!==11?'слушание':(n%10>1&&n%10<5&&(n%100<10||n%100>20))?'слушания':'слушаний'}</b> <span>приём замечаний ещё не закончился</span> <button class="b" id="nb">Показать</button>`;$('nb').onclick=()=>{F.win='now';sync()}}
