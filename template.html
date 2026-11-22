@@ -251,9 +251,31 @@ const gpl=new GP({attribution:'генплан Ярославля (мэрия)',o
 const layer=L.featureGroup().addTo(m),outline=L.layerGroup().addTo(m);let mk={};
 m.createPane('hearingBoundaries').style.zIndex=420;
 m.createPane('projectParcels').style.zIndex=425;
-const projectParcels=L.geoJSON(null,{pane:'projectParcels',style:feature=>({color:feature.properties.disputed?'#a5440e':'#173f60',
+function parcelPopup(properties){
+ const boundary=D.find(row=>row.id===openId)?.boundary;
+ const url=value=>typeof value==='string'&&/^https:\/\/[^\s]+$/i.test(value);
+ const geometrySource=[properties.geometry_source,properties.wfs_url,properties.source].find(url);
+ const decisionSource=[properties.document,properties.act_url,properties.source].find(value=>url(value)&&value!==geometrySource);
+ const generalSource=boundary?.sources?.find(source=>url(source.url));
+ const detail=properties.precision||boundary?.precision;
+ const sourceNote=properties.source&&!url(properties.source)?properties.source:'';
+ const accuracy=properties.disputed?'Требует сверки':properties.approximate?'Ориентировочное положение':'';
+ const links=new Map();
+ if(geometrySource)links.set(geometrySource,'Источник контура');
+ if(decisionSource)links.set(decisionSource,'Документ');
+ if(url(properties.previous_source)&&!links.has(properties.previous_source))links.set(properties.previous_source,'Предыдущая редакция');
+ if(!links.size&&generalSource)links.set(generalSource.url,'Источник по делу');
+ return `<strong>${esc(properties.number)}</strong>${accuracy?`<p><b>${esc(accuracy)}</b></p>`:''}
+  ${detail?`<p>${esc(detail)}</p>`:''}${sourceNote?`<p>${esc(sourceNote)}</p>`:''}
+  ${[...links].map(([href,label])=>`<div><a href="${esc(href)}" target="_blank" rel="noopener">${label}</a></div>`).join('')}`;
+}
+const projectParcels=L.geoJSON(null,{pane:'projectParcels',bubblingMouseEvents:false,style:feature=>({color:feature.properties.disputed?'#a5440e':'#173f60',
  weight:1.5,fillOpacity:.05,dashArray:feature.properties.disputed||feature.properties.approximate?'5 4':null}),
- onEachFeature:(feature,parcel)=>parcel.bindTooltip(esc(feature.properties.number))
+ onEachFeature:(feature,parcel)=>{
+  const properties=feature.properties;
+  parcel.bindTooltip(esc(properties.number));
+  parcel.bindPopup(()=>parcelPopup(properties),{maxWidth:285,maxHeight:175,autoPanPadding:[12,12]});
+ }
 }).addTo(m);
 function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ',dash=(rough||d.approx||d.how?.includes('приблизительно'))?'5':null,base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:dash};
  const s=d.shape;let o;
