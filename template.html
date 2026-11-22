@@ -270,7 +270,7 @@ function parcelPopup(properties){
   ${[...links].map(([href,label])=>`<div><a href="${esc(href)}" target="_blank" rel="noopener">${label}</a></div>`).join('')}`;
 }
 const projectParcels=L.geoJSON(null,{pane:'projectParcels',bubblingMouseEvents:false,style:feature=>({color:feature.properties.disputed?'#a5440e':'#173f60',
- weight:1.5,fillOpacity:.05,dashArray:feature.properties.disputed||feature.properties.approximate?'5 4':null}),
+ weight:feature.properties.outline?2:1.5,fill:!feature.properties.outline,fillOpacity:.05,dashArray:feature.properties.disputed||feature.properties.approximate?'5 4':null}),
  onEachFeature:(feature,parcel)=>{
   const properties=feature.properties;
   parcel.bindTooltip(esc(properties.number));
