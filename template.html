@@ -257,7 +257,7 @@ const projectParcels=L.geoJSON(null,{pane:'projectParcels',style:feature=>({colo
 }).addTo(m);
 function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ',dash=(rough||d.approx||d.how?.includes('приблизительно'))?'5':null,base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:dash};
  const s=d.shape;let o;
- if(d.boundary)o=L.geoJSON(d.boundary.geometry,{pane:'hearingBoundaries',style:{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3),smoothFactor:0}});
+ if(d.boundary)o=L.geoJSON(d.boundary.geometry,{pane:'hearingBoundaries',style:{...base,fill:!d.citywide,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3),smoothFactor:0}});
  else if(s&&s[0]==='poly')o=L.polygon(s[1],{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3)});
  else if(s&&s[0]==='rect'&&!d.how.startsWith('адрес'))o=L.rectangle([[s[1],s[2]],[s[3],s[4]]],{...base,fillOpacity:.2});
  else if(s&&s[0]==='circle')o=L.circle([d.lat,d.lon],{...base,radius:s[1],fillOpacity:.15});
@@ -434,7 +434,7 @@ function cardBrief(d){
 }
 function cardArch(d){const dl=d.docs.map(x=>`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>`).join('<br>');
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button>${d.lat!=null?'<button class="lnk" id="cm">На карте</button>':''}</div><div class="cd">
- <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.sec)}</span><span class="chip">постановление от ${fmt(d.start)}</span>${d.citywide?'<span class="chip">касается всего города</span>':d.boundary?`<span class="chip">${d.approx?'ориентировочная граница':d.boundary.partial?'подтверждённая часть':'точная граница'}</span>`:'<span class="chip">место приблизительно</span>'}${opB(d.id)}</div>
+ <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.sec)}</span><span class="chip">постановление от ${fmt(d.start)}</span>${(d.citywide?'<span class="chip">касается всего города</span>':'')+(d.boundary?`<span class="chip">${d.approx?'ориентировочная граница':d.boundary.partial?'подтверждённая часть':'точная граница'}</span>`:d.citywide?'':'<span class="chip">место приблизительно</span>')}${opB(d.id)}</div>
  ${cardBrief(d)}
  <h3>Что это</h3><p>${esc(d.expl)}</p>
  ${d.boundary?`<p class="lbl2">${esc(d.how)}</p>${boundarySources(d.boundary)}${unescoBlock(d.id)}${protectionBlock(d.id)}${ooptBlock(d.id)}`:`<p class="lbl2">${d.citywide?'Касается всего города: на карте точки нет, запись видна в списке и в блоке «Городские документы».':'Место на карте: '+esc(d.how||'не определено')+'. Границы неточные.'}</p>`}
