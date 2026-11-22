@@ -257,7 +257,7 @@ const projectParcels=L.geoJSON(null,{pane:'projectParcels',style:feature=>({colo
 }).addTo(m);
 function shapeOf(d){const rough=(d.how||'').startsWith('район'),bad=d.rec==='отказ',dash=(rough||d.approx||d.how?.includes('приблизительно'))?'5':null,base={color:bad?'#c00':COL[d.kind],weight:bad?3:2,fillColor:COL[d.kind],bubblingMouseEvents:false,dashArray:dash};
  const s=d.shape;let o;
- if(d.boundary)o=L.geoJSON(d.boundary.geometry,{pane:'hearingBoundaries',style:{...base,fill:!d.citywide,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3),smoothFactor:0}});
+ if(d.boundary?.geometry)o=L.geoJSON(d.boundary.geometry,{pane:'hearingBoundaries',style:{...base,fill:!d.citywide,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3),smoothFactor:0}});
  else if(s&&s[0]==='poly')o=L.polygon(s[1],{...base,fillOpacity:.28,weight:base.weight+Math.min(d.remarks/25,3)});
  else if(s&&s[0]==='rect'&&!d.how.startsWith('адрес'))o=L.rectangle([[s[1],s[2]],[s[3],s[4]]],{...base,fillOpacity:.2});
  else if(s&&s[0]==='circle')o=L.circle([d.lat,d.lon],{...base,radius:s[1],fillOpacity:.15});
@@ -293,7 +293,7 @@ function opIcons(d){const by={};(X.posts||[]).filter(o=>(o.h||[]).includes(d.id)
   b.on('add',()=>{const e=b.getElement();if(e){e.setAttribute('role','button');e.dataset.h=d.id;e.classList.toggle('sel',d.id===openId);e.setAttribute('aria-label','Мнение: '+a+', '+(l[0].d||''))}});b.addTo(layer)})}
 function drawMap(list){layer.clearLayers();mk={};list.filter(d=>d.lat!=null).forEach(d=>{const o=shapeOf(d);mk[d.id]=o;o.addTo(layer);if(OPS.has(d.id)&&SHOWOP)opIcons(d)})}
 function focusOn(id){touched=true;const o=mk[id];if(!o)return;const d=D.find(x=>x.id===id);setPanel('pm');m.invalidateSize();
- if(d.boundary){pendingDistrict=false;o.bringToFront();m.fitBounds(o.getBounds().pad(.4),{maxZoom:17,animate:false});return}
+ if(d.boundary?.geometry){pendingDistrict=false;o.bringToFront();m.fitBounds(o.getBounds().pad(.4),{maxZoom:17,animate:false});return}
  if(o.getBounds&&d.how&&!d.how.startsWith('адрес'))m.fitBounds(o.getBounds().pad(.4),{maxZoom:17});else m.setView([d.lat,d.lon],Math.max(m.getZoom(),16))}
 let pendingDistrict=false;
 function zoomDistrict(){touched=true;outline.clearLayers();const n=F.district;
@@ -465,7 +465,7 @@ function boundarySources(boundary){
 }
 function cardProject(d){
  $('card').innerHTML=`<div class="lh"><button class="lnk" id="cb">← К списку</button><b></b><button class="lnk" data-share-card>Поделиться</button><button class="lnk" id="cm">На карте</button></div><div class="cd">
- <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span><span class="chip">${d.approx?'ориентировочная граница':d.boundary?.partial?'подтверждённая часть':'точная граница'}</span></div>
+ <h2>${esc(d.plain)}</h2><div><span class="chip">${esc(d.kind)}</span><span class="chip">${esc(d.procedure)}</span><span class="chip">${!d.boundary?.geometry?'ориентир на карте':d.approx?'ориентировочная граница':d.boundary?.partial?'подтверждённая часть':'точная граница'}</span></div>
  ${cardBrief(d)}
  ${decisionBlock(d.decision)}
  <p class="lbl2">${esc(d.how)}</p>${boundarySources(d.boundary)}
